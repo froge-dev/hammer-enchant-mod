@@ -2,7 +2,6 @@ package com.frogedev.hammer_enchant;
 
 import com.frogedev.hammer_enchant.datagen.Generators;
 import com.mojang.logging.LogUtils;
-import com.tterrag.registrate.Registrate;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.common.MinecraftForge;
@@ -20,18 +19,6 @@ import org.slf4j.Logger;
 public class HammerEnchantMod {
     public static final String MOD_ID = "hammer_enchant";
     public static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final NonNullLazy<Registrate> REGISTRATE = NonNullLazy.of(
-            () -> Registrate.create(MOD_ID)
-                    .defaultCreativeTab("hammer_enchant", builder -> builder
-                            .title(Component.literal("Hammer Enchant"))
-                            .icon(Items.ENCHANTED_BOOK::getDefaultInstance)).build()
-    );
-
-    @NotNull
-    public static Registrate registrate() {
-        return REGISTRATE.get();
-    }
 
     public HammerEnchantMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
