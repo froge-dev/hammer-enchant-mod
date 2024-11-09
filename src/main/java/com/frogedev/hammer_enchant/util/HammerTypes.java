@@ -28,7 +28,7 @@ public class HammerTypes {
         public static final TillingHandler INSTANCE = new TillingHandler();
 
         @Override
-        public boolean shouldTryHandler(Player player, ItemStack tool) {
+        public boolean isToolCorrectType(ItemStack tool) {
             return tool.getItem() instanceof HoeItem;
         }
 
@@ -67,7 +67,7 @@ public class HammerTypes {
         public static final MiningHandler INSTANCE = new MiningHandler();
 
         @Override
-        public boolean shouldTryHandler(Player player, ItemStack tool) {
+        public boolean isToolCorrectType(ItemStack tool) {
             return true;
         }
 

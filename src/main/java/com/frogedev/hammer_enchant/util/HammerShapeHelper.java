@@ -18,7 +18,7 @@ import java.util.*;
 
 public class HammerShapeHelper {
     public interface MiningShapeHandler extends HammerShapeNeighborPredicate {
-        boolean shouldTryHandler(Player player, ItemStack tool);
+        boolean isToolCorrectType(ItemStack tool);
 
         void perform(Level level, ServerPlayer player, ItemStack tool, List<BlockPos> blocks);
 
@@ -29,55 +29,6 @@ public class HammerShapeHelper {
 
     public interface HammerShapeNeighborPredicate {
         boolean testNeighbor(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState);
-    }
-
-    public static boolean perform(
-            ServerPlayer player,
-            ItemStack tool,
-            BlockPos originPos,
-            HitResult hitResult,
-            MiningShapeHandler handler
-    ) {
-        UUID playerUUID = player.getUUID();
-        if (handler.playerTracker().contains(playerUUID)) {
-            return false;
-        }
-
-        if (!HammerShapeHelper.hasHammerModifiers(tool)) {
-            return false;
-        }
-
-        if (player.getCooldowns().isOnCooldown(tool.getItem())) {
-            return false;
-        }
-
-        Level level = player.level();
-        if (!handler.testOrigin(level, player, tool, originPos)) {
-            return false;
-        }
-
-        Iterator<BlockPos> targetBlockPositionsIter = getCandidateBlockPositions(
-                player,
-                tool,
-                hitResult,
-                originPos,
-                handler
-        );
-
-        List<BlockPos> targetBlockPositions = new ArrayList<>();
-        targetBlockPositionsIter.forEachRemaining(bp -> {
-            // BlockPos.betweenClosed returns mutated references to the SAME BlockPos, so we collect copies into a list to avoid issues.
-            targetBlockPositions.add(bp.immutable());
-        });
-
-        if (targetBlockPositions.size() < 2) {
-            return false;
-        }
-
-        handler.playerTracker().add(playerUUID);
-        handler.perform(level, player, tool, targetBlockPositions);
-        handler.playerTracker().remove(playerUUID);
-        return true;
     }
 
     public static Iterator<BlockPos> getCandidateBlockPositions(Player player, ItemStack tool, HitResult hitResult, BlockPos origin, HammerShapeNeighborPredicate neighborPredicate) {
@@ -136,7 +87,7 @@ public class HammerShapeHelper {
         return BlockPos.betweenClosed(minCorner, maxCorner).iterator();
     }
 
-    private static Vec3i getMiningSize(ItemStack itemStack) {
+    public static Vec3i getMiningSize(ItemStack itemStack) {
         int surfaceEnchantLevel = itemStack.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_SURFACE_ENCHANTMENT.get());
         int depthEnchantLevel = itemStack.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_DEPTH_ENCHANTMENT.get());
 
@@ -152,10 +103,5 @@ public class HammerShapeHelper {
         }
 
         return new Vec3i(depthEnchantLevel, height, width);
-    }
-
-    public static boolean hasHammerModifiers(ItemStack tool) {
-        Vec3i size = getMiningSize(tool);
-        return size.getX() > 0 || size.getY() > 0 || size.getZ() > 0;
     }
 }

@@ -1,5 +1,6 @@
 package com.frogedev.hammer_enchant.event.client;
 
+import com.frogedev.hammer_enchant.util.HammerHelper;
 import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -66,7 +67,7 @@ public class ToolRenderEvents {
         }
 
         ItemStack tool = player.getMainHandItem();
-        if (!HammerShapeHelper.hasHammerModifiers(tool)) {
+        if (!HammerHelper.hasHammerModifiers(tool)) {
             return;
         }
 
@@ -77,7 +78,7 @@ public class ToolRenderEvents {
 
         // Find the active tool mode.
         for (ToolMode candidateMode : MODE_ATTEMPT_ORDER) {
-            if (candidateMode.handler.shouldTryHandler(player, tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
+            if (candidateMode.handler.isToolCorrectType(tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
                 activeMode = candidateMode;
                 break;
             }

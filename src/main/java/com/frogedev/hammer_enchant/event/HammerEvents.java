@@ -1,5 +1,6 @@
 package com.frogedev.hammer_enchant.event;
 
+import com.frogedev.hammer_enchant.util.HammerHelper;
 import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.frogedev.hammer_enchant.ModConfig;
 import com.frogedev.hammer_enchant.util.HammerShapeHelper;
@@ -26,24 +27,36 @@ public class HammerEvents {
             return;
         }
 
-        if (someEvent instanceof PlayerInteractEvent.RightClickBlock rightClickBlockEvent) {
-            ItemStack tool = rightClickBlockEvent.getItemStack();
-
-            if (player.getCooldowns().isOnCooldown(tool.getItem())) {
-                return;
-            }
-
-            if (HammerTypes.TillingHandler.INSTANCE.shouldTryHandler(player, tool)) {
-                if (HammerShapeHelper.perform(
+        if (someEvent instanceof PlayerInteractEvent.RightClickBlock event) {
+            ItemStack tool = event.getItemStack();
+                if (HammerHelper.tryPerform(
                         player,
                         tool,
-                        rightClickBlockEvent.getPos(),
-                        rightClickBlockEvent.getHitVec(),
+                        event.getPos(),
+                        event.getHitVec(),
                         HammerTypes.TillingHandler.INSTANCE
                 )) {
-                    rightClickBlockEvent.setCanceled(true);
+                    event.setCanceled(true);
                 }
-            }
+        }
+    }
+
+    // On conclusion of block broken.
+    @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        if (HammerHelper.tryPerform(
+                player,
+                player.getMainHandItem(),
+                event.getPos(),
+                // Server-side raycast. For client, use Minecraft.instance.hitResult.
+                event.getPlayer().pick(event.getPlayer().getBlockReach(), 0F, false),
+                HammerTypes.MiningHandler.INSTANCE
+        )) {
+            event.setCanceled(true);
         }
     }
 
@@ -56,16 +69,8 @@ public class HammerEvents {
 
         Player player = event.getEntity();
         BlockPos breakPos = event.getPosition().get();
-
         ItemStack tool = player.getMainHandItem();
-        if (!HammerShapeHelper.hasHammerModifiers(tool)) {
-            return;
-        }
-
         Level level = player.level();
-        if (!HammerTypes.MiningHandler.INSTANCE.testOrigin(level, player, tool, breakPos)) {
-            return;
-        }
 
         Iterator<BlockPos> blockPosIter = HammerShapeHelper.getCandidateBlockPositions(
                 player,
@@ -76,47 +81,30 @@ public class HammerEvents {
         );
 
 
-        if (blockPosIter.hasNext()) {
-            List<Float> allDestroyTimes = new ArrayList<>();
-            while (blockPosIter.hasNext()) {
-                BlockPos blockPos = blockPosIter.next();
-                BlockState blockState = level.getBlockState(blockPos);
-                allDestroyTimes.add(blockState.getBlock().defaultDestroyTime());
-            }
-
-            // Mining speed (s) is basically everything *but* block hardness (h).
-            // Let (t) be time to break.
-            //  normally: t=h/s
-            //  we want: t' = f(h1,h2,...)/s
-            //  we can only change (s), so we do: t' = h/s'
-            //      f(h1,h2,...})/s = h/s'
-            //      s' = s*h / f(h1,h2,...)
-            float centerDestroyTime = level.getBlockState(breakPos).getBlock().defaultDestroyTime();
-            float totalDestroyTime = ModConfig.MINING_SPEED_MODE.get().computeDestroyTime(centerDestroyTime, allDestroyTimes);
-
-            if(totalDestroyTime > 0){
-                float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
-                event.setNewSpeed(newSpeed);
-            }
-        }
-    }
-
-    // On conclusion of block broken.
-    @SubscribeEvent
-    public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+        if (!blockPosIter.hasNext()) {
             return;
         }
 
-        if (HammerShapeHelper.perform(
-                player,
-                player.getMainHandItem(),
-                event.getPos(),
-                // Server-side raycast. For client, use Minecraft.instance.hitResult.
-                event.getPlayer().pick(event.getPlayer().getBlockReach(), 0F, false),
-                HammerTypes.MiningHandler.INSTANCE
-        )) {
-            event.setCanceled(true);
+        List<Float> allDestroyTimes = new ArrayList<>();
+        while (blockPosIter.hasNext()) {
+            BlockPos blockPos = blockPosIter.next();
+            BlockState blockState = level.getBlockState(blockPos);
+            allDestroyTimes.add(blockState.getBlock().defaultDestroyTime());
+        }
+
+        // Mining speed (s) is basically everything *but* block hardness (h).
+        // Let (t) be time to break.
+        //  normally: t=h/s
+        //  we want: t' = f(h1,h2,...)/s
+        //  we can only change (s), so we do: t' = h/s'
+        //      f(h1,h2,...})/s = h/s'
+        //      s' = s*h / f(h1,h2,...)
+        float centerDestroyTime = level.getBlockState(breakPos).getBlock().defaultDestroyTime();
+        float totalDestroyTime = ModConfig.MINING_SPEED_MODE.get().computeDestroyTime(centerDestroyTime, allDestroyTimes);
+
+        if(totalDestroyTime > 0){
+            float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
+            event.setNewSpeed(newSpeed);
         }
     }
 }
