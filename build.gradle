@@ -130,6 +130,12 @@ repositories {
     //     dir 'libs'
     // }
 
+    // Flywheel
+    maven {
+        name "tterrag maven"
+        url "https://maven.tterrag.com/"
+    }
+
     // JEI
     maven {
         url "https://maven.blamejared.com"
@@ -160,6 +166,10 @@ dependencies {
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
+
+    // Flywheel.
+    compileOnly fg.deobf("com.jozufozu.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}")
+    runtimeOnly fg.deobf("com.jozufozu.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
 
     // Jade (alternative to TOP and WAILA)
     implementation fg.deobf("curse.maven:jade-324717:${jade_version_id}")

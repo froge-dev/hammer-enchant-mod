@@ -17,10 +17,10 @@ public enum MiningSpeedMode {
             return allDestroyTimes.stream().reduce(0f, Float::sum);
         }
     },
-    SQRT_SUM {
+    SUM_OVER_SQRT_N {
         @Override
         public float computeDestroyTime(float primaryDestroyTime, List<Float> allDestroyTimes) {
-            return (float) Math.sqrt(allDestroyTimes.stream().reduce(0f, Float::sum));
+            return (float) (allDestroyTimes.stream().reduce(0f, Float::sum) / Math.sqrt(allDestroyTimes.size()));
         }
     },
     AVG {
@@ -36,7 +36,7 @@ public enum MiningSpeedMode {
         }
     };
 
-    public static final MiningSpeedMode DEFAULT = SQRT_SUM;
+    public static final MiningSpeedMode DEFAULT = SUM_OVER_SQRT_N;
 
     public static MiningSpeedMode fromString(String str) {
         try {

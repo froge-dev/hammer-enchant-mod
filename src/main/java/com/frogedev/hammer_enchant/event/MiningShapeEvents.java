@@ -131,7 +131,7 @@ public class MiningShapeEvents {
                 // Allow hoe to mine any instamineable block.
                 return toolItem.isCorrectToolForDrops(originBlockState) || originBlockState.getDestroySpeed(level, pos) <= ModConfig.INSTAMINE_THRESHOLD.get();
             } else {
-                return toolItem.isCorrectToolForDrops(originBlockState);
+                return toolItem.isCorrectToolForDrops(originBlockState) && originBlockState.getDestroySpeed(level, pos) > ModConfig.INSTAMINE_THRESHOLD.get();
             }
         }
 
@@ -208,6 +208,10 @@ public class MiningShapeEvents {
         }
 
         Level level = player.level();
+        if (!MiningHandler.INSTANCE.testOrigin(level, player, tool, breakPos)) {
+            return;
+        }
+
         Iterator<BlockPos> blockPosIter = MiningShapeHelpers.getCandidateBlockPositions(
                 player,
                 tool,
@@ -226,8 +230,11 @@ public class MiningShapeEvents {
 
             float centerDestroyTime = level.getBlockState(breakPos).getBlock().defaultDestroyTime();
             float totalDestroyTime = ModConfig.MINING_SPEED_MODE.get().computeDestroyTime(centerDestroyTime, allDestroyTimes);
-            float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
-            event.setNewSpeed(newSpeed);
+
+            if(totalDestroyTime > 0){
+                float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
+                event.setNewSpeed(newSpeed);
+            }
         }
     }
 }
