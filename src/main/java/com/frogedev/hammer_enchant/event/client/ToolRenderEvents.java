@@ -1,10 +1,10 @@
 package com.frogedev.hammer_enchant.event.client;
 
+import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.frogedev.hammer_enchant.HammerEnchantMod;
-import com.frogedev.hammer_enchant.event.MiningShapeEvents;
-import com.frogedev.hammer_enchant.util.MiningShapeHelpers;
+import com.frogedev.hammer_enchant.util.HammerShapeHelper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -36,13 +36,13 @@ public class ToolRenderEvents {
 
     private enum ToolMode {
         None(null, 0F, 0F, 0F),
-        Mine(MiningShapeEvents.MiningHandler.INSTANCE, 1F, 0.4F, 0.4F),
-        Till(MiningShapeEvents.TillingHandler.INSTANCE, 0.8F, 1F, 0F);
+        Mine(HammerTypes.MiningHandler.INSTANCE, 1F, 0.4F, 0.4F),
+        Till(HammerTypes.TillingHandler.INSTANCE, 0.8F, 1F, 0F);
 
         final float r, g, b;
-        final MiningShapeHelpers.MiningShapeHandler handler;
+        final HammerShapeHelper.MiningShapeHandler handler;
 
-        ToolMode(MiningShapeHelpers.MiningShapeHandler handler, float r, float g, float b) {
+        ToolMode(HammerShapeHelper.MiningShapeHandler handler, float r, float g, float b) {
             this.handler = handler;
             this.r = r;
             this.g = g;
@@ -66,7 +66,7 @@ public class ToolRenderEvents {
         }
 
         ItemStack tool = player.getMainHandItem();
-        if (!MiningShapeHelpers.hasMiningShapeModifiers(tool)) {
+        if (!HammerShapeHelper.hasHammerModifiers(tool)) {
             return;
         }
 
@@ -88,7 +88,7 @@ public class ToolRenderEvents {
             return;
         }
 
-        Iterator<BlockPos> breakableBlocks = MiningShapeHelpers.getCandidateBlockPositions(
+        Iterator<BlockPos> breakableBlocks = HammerShapeHelper.getCandidateBlockPositions(
                 player,
                 tool,
                 Minecraft.getInstance().hitResult,

@@ -16,8 +16,8 @@ import net.minecraftforge.fluids.IFluidBlock;
 
 import java.util.*;
 
-public class MiningShapeHelpers {
-    public interface MiningShapeHandler extends MiningShapeNeighborPredicate {
+public class HammerShapeHelper {
+    public interface MiningShapeHandler extends HammerShapeNeighborPredicate {
         boolean shouldTryHandler(Player player, ItemStack tool);
 
         void perform(Level level, ServerPlayer player, ItemStack tool, List<BlockPos> blocks);
@@ -27,11 +27,11 @@ public class MiningShapeHelpers {
         Set<UUID> playerTracker();
     }
 
-    public interface MiningShapeNeighborPredicate {
+    public interface HammerShapeNeighborPredicate {
         boolean testNeighbor(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState);
     }
 
-    public static boolean handleMiningShapeEvent(
+    public static boolean perform(
             ServerPlayer player,
             ItemStack tool,
             BlockPos originPos,
@@ -43,7 +43,7 @@ public class MiningShapeHelpers {
             return false;
         }
 
-        if (!MiningShapeHelpers.hasMiningShapeModifiers(tool)) {
+        if (!HammerShapeHelper.hasHammerModifiers(tool)) {
             return false;
         }
 
@@ -80,7 +80,7 @@ public class MiningShapeHelpers {
         return true;
     }
 
-    public static Iterator<BlockPos> getCandidateBlockPositions(Player player, ItemStack tool, HitResult hitResult, BlockPos origin, MiningShapeNeighborPredicate neighborPredicate) {
+    public static Iterator<BlockPos> getCandidateBlockPositions(Player player, ItemStack tool, HitResult hitResult, BlockPos origin, HammerShapeNeighborPredicate neighborPredicate) {
         Level level = player.level();
         BlockState originBlockState = level.getBlockState(origin);
 
@@ -154,7 +154,7 @@ public class MiningShapeHelpers {
         return new Vec3i(depthEnchantLevel, height, width);
     }
 
-    public static boolean hasMiningShapeModifiers(ItemStack tool) {
+    public static boolean hasHammerModifiers(ItemStack tool) {
         Vec3i size = getMiningSize(tool);
         return size.getX() > 0 || size.getY() > 0 || size.getZ() > 0;
     }
