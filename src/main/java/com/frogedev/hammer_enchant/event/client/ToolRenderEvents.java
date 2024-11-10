@@ -111,10 +111,6 @@ public class ToolRenderEvents {
         // start drawing
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         Entity viewEntity = camera.getEntity();
-        Vec3 camPos = camera.getPosition();
-        final double camX = camPos.x();
-        final double camY = camPos.y();
-        final double camZ = camPos.z();
         int rendered = 0;
 
         CollisionContext collisionContext = CollisionContext.of(viewEntity);
@@ -123,8 +119,9 @@ public class ToolRenderEvents {
             BlockPos pos = breakableBlocks.next();
 
             if (level.getWorldBorder().isWithinBounds(pos)) {
+                Vec3 camPos = camera.getPosition();
                 rendered++;
-                highlightBlock(pos, matrices, level, camX, camY, camZ, buffers, 0.0f, activeMode.r, activeMode.g, activeMode.b);
+                highlightBlock(pos, matrices, level, camPos, buffers, 0.0f, activeMode.r, activeMode.g, activeMode.b);
             }
         } while (rendered < MAX_BLOCKS && breakableBlocks.hasNext());
 
@@ -133,21 +130,22 @@ public class ToolRenderEvents {
     }
 
     // From SupportBlockRenderer:highlightPosition
-    private static void highlightBlock(BlockPos pos, PoseStack poseStack, Level level, double pCamX, double pCamY, double pCamZ, MultiBufferSource bufferSource, double pBias, float pRed, float pGreen, float pBlue) {
-//        double d0 = (double) pos.getX() - pCamX - 2.0d * pBias;
-//        double d1 = (double) pos.getY() - pCamY - 2.0d * pBias;
-//        double d2 = (double) pos.getZ() - pCamZ - 2.0d * pBias;
-//        double d3 = d0 + 1.0d + 4.0d * pBias;
-//        double d4 = d1 + 1.0d + 4.0d * pBias;
-//        double d5 = d2 + 1.0d + 4.0d * pBias;
+    private static void highlightBlock(BlockPos pos, PoseStack poseStack, Level level, Vec3 camPos, MultiBufferSource bufferSource, double pBias, float pRed, float pGreen, float pBlue) {
         VertexConsumer vertexBuilder = bufferSource.getBuffer(RenderType.lines());
         VoxelShape shape = level
                 .getBlockState(pos)
                 .getShape(level, pos)
                 .move(pos.getX(), pos.getY(), pos.getZ());
+        LevelRenderer.renderVoxelShape(poseStack, vertexBuilder, shape, -camPos.x, -camPos.y, -camPos.z, pRed, pGreen, pBlue, 1.0F, false);
 
-//        LevelRenderer.renderLineBox(poseStack, bufferSource.getBuffer(RenderType.lines()), d0, d1, d2, d3, d4, d5, pRed, pGreen, pBlue, 0.4F);
-        LevelRenderer.renderVoxelShape(poseStack, vertexBuilder, shape, -pCamX, -pCamY, -pCamZ, pRed, pGreen, pBlue, 1.0F, false);
+
+//        double d0 = (double) pos.getX() - camPos.x - 2.0d * pBias;
+//        double d1 = (double) pos.getY() - camPos.y - 2.0d * pBias;
+//        double d2 = (double) pos.getZ() - camPos.z - 2.0d * pBias;
+//        double d3 = d0 + 1.0d + 4.0d * pBias;
+//        double d4 = d1 + 1.0d + 4.0d * pBias;
+//        double d5 = d2 + 1.0d + 4.0d * pBias;
+//        LevelRenderer.renderLineBox(poseStack, vertexBuilder, d0, d1, d2, d3, d4, d5, pRed, pGreen, pBlue, 1.0F);
     }
 
     /**
