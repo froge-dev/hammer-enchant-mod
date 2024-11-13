@@ -1,9 +1,9 @@
 package com.frogedev.hammer_enchant.event;
 
-import com.frogedev.hammer_enchant.util.HammerHelper;
-import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.frogedev.hammer_enchant.ModConfig;
+import com.frogedev.hammer_enchant.util.HammerHelper;
 import com.frogedev.hammer_enchant.util.HammerShapeHelper;
+import com.frogedev.hammer_enchant.util.HammerTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -16,7 +16,9 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class HammerEvents {
@@ -29,15 +31,15 @@ public class HammerEvents {
 
         if (someEvent instanceof PlayerInteractEvent.RightClickBlock event) {
             ItemStack tool = event.getItemStack();
-                if (HammerHelper.tryPerform(
-                        player,
-                        tool,
-                        event.getPos(),
-                        event.getHitVec(),
-                        HammerTypes.TillingHandler.INSTANCE
-                )) {
-                    event.setCanceled(true);
-                }
+            if (HammerHelper.tryPerform(
+                    player,
+                    tool,
+                    event.getPos(),
+                    event.getHitVec(),
+                    HammerTypes.TillingHandler.INSTANCE
+            )) {
+                event.setCanceled(true);
+            }
         }
     }
 
@@ -102,7 +104,7 @@ public class HammerEvents {
         float centerDestroyTime = level.getBlockState(breakPos).getBlock().defaultDestroyTime();
         float totalDestroyTime = ModConfig.MINING_SPEED_MODE.get().computeDestroyTime(centerDestroyTime, allDestroyTimes);
 
-        if(totalDestroyTime > 0){
+        if (totalDestroyTime > 0) {
             float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
             event.setNewSpeed(newSpeed);
         }
