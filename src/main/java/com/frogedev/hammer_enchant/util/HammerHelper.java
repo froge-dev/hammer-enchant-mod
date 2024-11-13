@@ -2,9 +2,7 @@ package com.frogedev.hammer_enchant.util;
 
 import com.frogedev.hammer_enchant.ModEnchantments;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
@@ -15,7 +13,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.frogedev.hammer_enchant.util.HammerShapeHelper.getCandidateBlockPositions;
-import static com.frogedev.hammer_enchant.util.HammerShapeHelper.getMiningSize;
 
 public class HammerHelper {
     public static boolean hasHammerModifiers(ItemStack tool) {
@@ -42,7 +39,7 @@ public class HammerHelper {
             return false;
         }
 
-        if(!handler.isToolCorrectType(tool)){
+        if (!handler.isToolCorrectType(tool)) {
             return false;
         }
 
