@@ -1,8 +1,9 @@
 package com.frogedev.hammer_enchant.event.client;
 
 import com.frogedev.hammer_enchant.HammerEnchantMod;
-import com.frogedev.hammer_enchant.event.MiningShapeEvents;
-import com.frogedev.hammer_enchant.util.MiningShapeHelpers;
+import com.frogedev.hammer_enchant.util.HammerHelper;
+import com.frogedev.hammer_enchant.util.HammerShapeHelper;
+import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -47,13 +48,13 @@ public class ToolRenderEvents {
 
     private enum ToolMode {
         None(null, 0F, 0F, 0F),
-        Mine(MiningShapeEvents.MiningHandler.INSTANCE, 1F, 0.4F, 0.4F),
-        Till(MiningShapeEvents.TillingHandler.INSTANCE, 0.8F, 1F, 0F);
+        Mine(HammerTypes.MiningHandler.INSTANCE, 1F, 0.4F, 0.4F),
+        Till(HammerTypes.TillingHandler.INSTANCE, 0.8F, 1F, 0F);
 
         final float r, g, b;
-        final MiningShapeHelpers.MiningShapeHandler handler;
+        final HammerShapeHelper.MiningShapeHandler handler;
 
-        ToolMode(MiningShapeHelpers.MiningShapeHandler handler, float r, float g, float b) {
+        ToolMode(HammerShapeHelper.MiningShapeHandler handler, float r, float g, float b) {
             this.handler = handler;
             this.r = r;
             this.g = g;
@@ -77,7 +78,7 @@ public class ToolRenderEvents {
         }
 
         ItemStack tool = player.getMainHandItem();
-        if (!MiningShapeHelpers.hasMiningShapeModifiers(tool)) {
+        if (!HammerHelper.hasHammerModifiers(tool)) {
             return;
         }
 
@@ -88,7 +89,7 @@ public class ToolRenderEvents {
 
         // Find the active tool mode.
         for (ToolMode candidateMode : MODE_ATTEMPT_ORDER) {
-            if (candidateMode.handler.shouldTryHandler(player, tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
+            if (candidateMode.handler.isToolCorrectType(tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
                 activeMode = candidateMode;
                 break;
             }
@@ -99,7 +100,7 @@ public class ToolRenderEvents {
             return;
         }
 
-        Iterator<BlockPos> breakableBlocks = MiningShapeHelpers.getCandidateBlockPositions(
+        Iterator<BlockPos> breakableBlocks = HammerShapeHelper.getCandidateBlockPositions(
                 player,
                 tool,
                 Minecraft.getInstance().hitResult,
@@ -121,10 +122,6 @@ public class ToolRenderEvents {
         // start drawing
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         Entity viewEntity = camera.getEntity();
-        Vec3 camPos = camera.getPosition();
-        final double camX = camPos.x();
-        final double camY = camPos.y();
-        final double camZ = camPos.z();
         int rendered = 0;
 
         CollisionContext collisionContext = CollisionContext.of(viewEntity);
@@ -133,8 +130,9 @@ public class ToolRenderEvents {
             BlockPos pos = breakableBlocks.next();
 
             if (level.getWorldBorder().isWithinBounds(pos)) {
+                Vec3 camPos = camera.getPosition();
                 rendered++;
-                highlightBlock(pos, matrices, level, camX, camY, camZ, buffers, 0.0f, activeMode.r, activeMode.g, activeMode.b);
+                highlightBlock(pos, matrices, level, camPos, buffers, 0.0f, activeMode.r, activeMode.g, activeMode.b);
             }
         } while (rendered < MAX_BLOCKS && breakableBlocks.hasNext());
 
@@ -143,14 +141,14 @@ public class ToolRenderEvents {
     }
 
     // From SupportBlockRenderer:highlightPosition
-    private static void highlightBlock(BlockPos pos, PoseStack poseStack, Level level, double pCamX, double pCamY, double pCamZ, MultiBufferSource bufferSource, double pBias, float pRed, float pGreen, float pBlue) {
+    private static void highlightBlock(BlockPos pos, PoseStack poseStack, Level level, Vec3 camPos, MultiBufferSource bufferSource, double pBias, float pRed, float pGreen, float pBlue) {
         VertexConsumer vertexBuilder = bufferSource.getBuffer(RenderType.lines());
         VoxelShape shape = level
                 .getBlockState(pos)
                 .getShape(level, pos)
                 .move(pos.getX(), pos.getY(), pos.getZ());
 
-        LevelRenderer.renderVoxelShape(poseStack, vertexBuilder, shape, -pCamX, -pCamY, -pCamZ, pRed, pGreen, pBlue, 1.0F, false);
+        LevelRenderer.renderVoxelShape(poseStack, vertexBuilder, shape, -camPos.x, -camPos.y, -camPos.z, pRed, pGreen, pBlue, 1.0F, false);
     }
 
     /**
@@ -169,7 +167,7 @@ public class ToolRenderEvents {
         Level level = player.level();
 
         ItemStack tool = player.getMainHandItem();
-        if (!MiningShapeHelpers.hasMiningShapeModifiers(tool)) {
+        if (!HammerHelper.hasHammerModifiers(tool)) {
             return;
         }
 
@@ -182,7 +180,7 @@ public class ToolRenderEvents {
 
         // Find the active tool mode.
         for (ToolMode candidateMode : MODE_ATTEMPT_ORDER) {
-            if (candidateMode.handler.shouldTryHandler(player, tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
+            if (candidateMode.handler.isToolCorrectType(tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
                 activeMode = candidateMode;
                 break;
             }
@@ -193,7 +191,7 @@ public class ToolRenderEvents {
             return;
         }
 
-        Iterator<BlockPos> breakableBlocks = MiningShapeHelpers.getCandidateBlockPositions(
+        Iterator<BlockPos> breakableBlocks = HammerShapeHelper.getCandidateBlockPositions(
                 player,
                 tool,
                 Minecraft.getInstance().hitResult,
