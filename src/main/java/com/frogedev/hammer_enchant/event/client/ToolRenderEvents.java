@@ -46,6 +46,13 @@ public class ToolRenderEvents {
      */
     private static final int MAX_BLOCKS = 60;
 
+    private static Field field_LevelRenderer_DestroyingBlocks;
+
+    static {
+        field_LevelRenderer_DestroyingBlocks = ObfuscationReflectionHelper.findField(LevelRenderer.class, "destroyingBlocks");
+        field_LevelRenderer_DestroyingBlocks.setAccessible(true);
+    }
+
     private enum ToolMode {
         None(null, 0F, 0F, 0F),
         Mine(HammerTypes.MiningHandler.INSTANCE, 1F, 0.4F, 0.4F),
@@ -63,6 +70,16 @@ public class ToolRenderEvents {
     }
 
     private static final ToolMode[] MODE_ATTEMPT_ORDER = new ToolMode[]{ToolMode.Till, ToolMode.Mine};
+
+    private static Int2ObjectMap<BlockDestructionProgress> getBlockDestructionProgress(LevelRenderer levelRenderer) {
+        try {
+            return (Int2ObjectMap<BlockDestructionProgress>) field_LevelRenderer_DestroyingBlocks.get(levelRenderer);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
     /**
      * Renders the outline on the extra blocks
@@ -154,9 +171,6 @@ public class ToolRenderEvents {
     /**
      * Renders the block damage process on the extra blocks
      */
-
-    // TODO(radu): this is rancid, so much copy paste, very inefficient... pls fix.
-    // use BlockRenderDispatcher::renderBreakingTexture, see LevelRenderer:L1342
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
@@ -199,17 +213,8 @@ public class ToolRenderEvents {
                 activeMode.handler
         );
 
-        // Setting private field to accessible
         LevelRenderer levelRenderer = Minecraft.getInstance().levelRenderer;
-        Int2ObjectMap<BlockDestructionProgress> destroyingBlocks = null;
-        try {
-            Field destroyingBlocksField = ObfuscationReflectionHelper.findField(levelRenderer.getClass(), "destroyingBlocks");
-            destroyingBlocksField.setAccessible(true);
-            destroyingBlocks = (Int2ObjectMap<BlockDestructionProgress>) destroyingBlocksField.get(levelRenderer);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
+        Int2ObjectMap<BlockDestructionProgress> destroyingBlocks = getBlockDestructionProgress(levelRenderer);
 
         if (destroyingBlocks == null) {
             return;
@@ -257,76 +262,4 @@ public class ToolRenderEvents {
 
         poseStack.popPose();
     }
-
-    /*
-    @SubscribeEvent
-    static void renderBlockDamageProgress(RenderLevelStageEvent event) {
-        // validate required variables are set
-        MultiPlayerGameMode controller = Minecraft.getInstance().gameMode;
-        if (controller == null || !controller.isDestroying()) {
-            return;
-        }
-        Level world = Minecraft.getInstance().level;
-        Player player = Minecraft.getInstance().player;
-        if (world == null || player == null || Minecraft.getInstance().getCameraEntity() == null) {
-            return;
-        }
-        // must have the right tags
-        ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty() || !stack.is(TinkerTags.Items.HARVEST)) {
-            return;
-        }
-        // must be targeting a block
-        HitResult result = Minecraft.getInstance().hitResult;
-        if (result == null || result.getType() != Type.BLOCK) {
-            return;
-        }
-        // find breaking progress
-        BlockHitResult blockTrace = (BlockHitResult) result;
-        BlockPos target = blockTrace.getBlockPos();
-        BlockDestructionProgress progress = null;
-        for (Int2ObjectMap.Entry<BlockDestructionProgress> entry : Minecraft.getInstance().levelRenderer.destroyingBlocks.int2ObjectEntrySet()) {
-            if (entry.getValue().getPos().equals(target)) {
-                progress = entry.getValue();
-                break;
-            }
-        }
-        if (progress == null) {
-            return;
-        }
-        // determine extra blocks to highlight
-        BlockState state = world.getBlockState(target);
-        Iterator<BlockPos> extraBlocks = tool.getDefinition().getData().getAOE().getBlocks(tool, stack, player, state, world, target, blockTrace.getDirection(), IAreaOfEffectIterator.AOEMatchType.BREAKING).iterator();
-        if (!extraBlocks.hasNext()) {
-            return;
-        }
-
-        // set up buffers
-        PoseStack matrices = event.getPoseStack();
-        matrices.pushPose();
-        MultiBufferSource.BufferSource vertices = event.getLevelRenderer().renderBuffers.crumblingBufferSource();
-        VertexConsumer vertexBuilder = vertices.getBuffer(ModelBakery.DESTROY_TYPES.get(progress.getProgress()));
-
-        // finally, render the blocks
-        Camera renderInfo = Minecraft.getInstance().gameRenderer.getMainCamera();
-        double x = renderInfo.getPosition().x;
-        double y = renderInfo.getPosition().y;
-        double z = renderInfo.getPosition().z;
-        BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-        int rendered = 0;
-        do {
-            BlockPos pos = extraBlocks.next();
-            matrices.pushPose();
-            matrices.translate(pos.getX() - x, pos.getY() - y, pos.getZ() - z);
-            PoseStack.Pose entry = matrices.last();
-            VertexConsumer blockBuilder = new SheetedDecalTextureGenerator(vertexBuilder, entry.pose(), entry.normal());
-            dispatcher.renderBreakingTexture(world.getBlockState(pos), pos, world, matrices, blockBuilder);
-            matrices.popPose();
-            rendered++;
-        } while (rendered < MAX_BLOCKS && extraBlocks.hasNext());
-        // finish rendering
-        matrices.popPose();
-        vertices.endBatch();
-    }
-     */
 }
