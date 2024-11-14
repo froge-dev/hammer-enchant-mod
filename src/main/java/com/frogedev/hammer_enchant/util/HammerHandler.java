@@ -3,43 +3,51 @@ package com.frogedev.hammer_enchant.util;
 import com.frogedev.hammer_enchant.ModEnchantments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static com.frogedev.hammer_enchant.util.HammerShapeHelper.getCandidateBlockPositions;
 
-public class HammerHelper {
+public abstract class HammerHandler {
+    public abstract boolean isToolCorrectType(ItemStack tool);
+
+    public abstract boolean doesStartingBlockQualify(Level level, Player player, ItemStack tool, BlockPos pos);
+
+    public abstract boolean doesNeighborBlockQualify(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState);
+
+    abstract void perform(Level level, ServerPlayer player, ItemStack tool, List<BlockPos> blocks);
+
+    Set<UUID> playerTracker = new HashSet<>();
+
     public static boolean hasHammerModifiers(ItemStack tool) {
         int surfaceEnchantLevel = tool.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_SURFACE_ENCHANTMENT.get());
         int depthEnchantLevel = tool.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_DEPTH_ENCHANTMENT.get());
         return surfaceEnchantLevel > 0 || depthEnchantLevel > 0;
     }
 
-    public static boolean tryPerform(
+    public final boolean tryPerform(
             ServerPlayer player,
             ItemStack tool,
             BlockPos originPos,
-            HitResult hitResult,
-            HammerShapeHelper.MiningShapeHandler handler
+            HitResult hitResult
     ) {
         UUID playerUUID = player.getUUID();
 
         // Perform various checks to see if the hammer should be used.
-        if (handler.playerTracker().contains(playerUUID)) {
+        if (this.playerTracker.contains(playerUUID)) {
             return false;
         }
 
-        if (!HammerHelper.hasHammerModifiers(tool)) {
+        if (!hasHammerModifiers(tool)) {
             return false;
         }
 
-        if (!handler.isToolCorrectType(tool)) {
+        if (!isToolCorrectType(tool)) {
             return false;
         }
 
@@ -48,7 +56,7 @@ public class HammerHelper {
         }
 
         Level level = player.level();
-        if (!handler.testOrigin(level, player, tool, originPos)) {
+        if (!this.doesStartingBlockQualify(level, player, tool, originPos)) {
             return false;
         }
 
@@ -57,7 +65,7 @@ public class HammerHelper {
                 tool,
                 hitResult,
                 originPos,
-                handler
+                this
         );
 
         List<BlockPos> targetBlockPositions = new ArrayList<>();
@@ -66,9 +74,9 @@ public class HammerHelper {
             targetBlockPositions.add(bp.immutable());
         });
 
-        handler.playerTracker().add(playerUUID);
-        handler.perform(level, player, tool, targetBlockPositions);
-        handler.playerTracker().remove(playerUUID);
+        this.playerTracker.add(playerUUID);
+        this.perform(level, player, tool, targetBlockPositions);
+        this.playerTracker.remove(playerUUID);
         return true;
     }
 }
