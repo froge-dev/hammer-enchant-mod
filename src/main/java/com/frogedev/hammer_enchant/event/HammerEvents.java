@@ -22,6 +22,21 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class HammerEvents {
+    @SubscribeEvent
+    public static void onToolModifyBlock(BlockEvent.BlockToolModificationEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        if (HammerHelper.tryPerformUse(
+                event.getContext(),
+                event.getToolAction(),
+                HammerTypes.ToolUseHandler.INSTANCE
+        )) {
+            event.setCanceled(true);
+        }
+    }
+
     // Called on right-click.
     @SubscribeEvent
     public static void onPlayerInteract(PlayerInteractEvent someEvent) {
@@ -29,18 +44,18 @@ public class HammerEvents {
             return;
         }
 
-        if (someEvent instanceof PlayerInteractEvent.RightClickBlock event) {
-            ItemStack tool = event.getItemStack();
-            if (HammerHelper.tryPerform(
-                    player,
-                    tool,
-                    event.getPos(),
-                    event.getHitVec(),
-                    HammerTypes.TillingHandler.INSTANCE
-            )) {
-                event.setCanceled(true);
-            }
-        }
+//        if (someEvent instanceof PlayerInteractEvent.RightClickBlock event) {
+//            ItemStack tool = event.getItemStack();
+//            if (HammerHelper.tryPerform(
+//                    player,
+//                    tool,
+//                    event.getPos(),
+//                    event.getHitVec(),
+//                    HammerTypes.TillingHandler.INSTANCE
+//            )) {
+//                event.setCanceled(true);
+//            }
+//        }
     }
 
     // On conclusion of block broken.

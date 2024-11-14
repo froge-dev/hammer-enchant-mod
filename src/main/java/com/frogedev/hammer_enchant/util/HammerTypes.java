@@ -23,6 +23,36 @@ public class HammerTypes {
         return level.getBlockState(blockPos).is(ModTags.Blocks.TILLABLE_BLOCK_TAG) && level.getBlockState(blockPos.above()).isAir();
     }
 
+    public static class ToolUseHandler implements HammerShapeHelper.MiningShapeHandler {
+        private static final Set<UUID> playerTracker = new HashSet<>();
+        public static final ToolUseHandler INSTANCE = new ToolUseHandler();
+
+        @Override
+        public boolean isToolCorrectType(ItemStack tool) {
+            return true;
+        }
+
+        @Override
+        public void perform(Level level, ServerPlayer player, ItemStack tool, List<BlockPos> blocks) {
+
+        }
+
+        @Override
+        public boolean testOrigin(Level level, Player player, ItemStack tool, BlockPos pos) {
+            return true;
+        }
+
+        @Override
+        public Set<UUID> playerTracker() {
+            return playerTracker;
+        }
+
+        @Override
+        public boolean testNeighbor(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState) {
+            return true;
+        }
+    }
+
     public static class TillingHandler implements HammerShapeHelper.MiningShapeHandler {
         private static final Set<UUID> playerTracker = new HashSet<>();
         public static final TillingHandler INSTANCE = new TillingHandler();
