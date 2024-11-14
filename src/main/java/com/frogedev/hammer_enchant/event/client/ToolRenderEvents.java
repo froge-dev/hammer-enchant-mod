@@ -1,9 +1,7 @@
 package com.frogedev.hammer_enchant.event.client;
 
 import com.frogedev.hammer_enchant.HammerEnchantMod;
-import com.frogedev.hammer_enchant.util.HammerHandler;
-import com.frogedev.hammer_enchant.util.HammerShapeHelper;
-import com.frogedev.hammer_enchant.util.HammerTypes;
+import com.frogedev.hammer_enchant.util.*;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -18,9 +16,11 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.BlockDestructionProgress;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -46,30 +46,14 @@ public class ToolRenderEvents {
      */
     private static final int MAX_BLOCKS = 60;
 
+    public record FloatColor(float r, float g, float b){};
+
     private static Field field_LevelRenderer_DestroyingBlocks;
 
     static {
         field_LevelRenderer_DestroyingBlocks = ObfuscationReflectionHelper.findField(LevelRenderer.class, "destroyingBlocks");
         field_LevelRenderer_DestroyingBlocks.setAccessible(true);
     }
-
-    private enum ToolMode {
-        None(null, 0F, 0F, 0F),
-        Mine(HammerTypes.MiningHandler.INSTANCE, 1F, 0.4F, 0.4F),
-        Till(HammerTypes.TillingHandler.INSTANCE, 0.8F, 1F, 0F);
-
-        final float r, g, b;
-        final HammerHandler handler;
-
-        ToolMode(HammerHandler handler, float r, float g, float b) {
-            this.handler = handler;
-            this.r = r;
-            this.g = g;
-            this.b = b;
-        }
-    }
-
-    private static final ToolMode[] MODE_ATTEMPT_ORDER = new ToolMode[]{ToolMode.Till, ToolMode.Mine};
 
     private static Int2ObjectMap<BlockDestructionProgress> getBlockDestructionProgress(LevelRenderer levelRenderer) {
         try {
@@ -80,6 +64,14 @@ public class ToolRenderEvents {
 
         return null;
     }
+
+    private static final UseEventHammerHandler[] USE_HANDLERS = {
+            HammerTypes.UniversalToolUseHandler.INSTANCE,
+    };
+
+    private static final MiningEventHammerHandler[] MINING_HANDLERS = {
+            HammerTypes.UniversalMiningHandler.INSTANCE,
+    };
 
     /**
      * Renders the outline on the extra blocks
@@ -95,37 +87,41 @@ public class ToolRenderEvents {
         }
 
         ItemStack tool = player.getMainHandItem();
-        if (!HammerHandler.hasHammerModifiers(tool)) {
+        if (!GenericHammerHandler.hasHammerModifiers(tool)) {
             return;
         }
+
+        record HandlerResult(Iterator<BlockPos> blocks, FloatColor wireframeColor){}
 
         BlockHitResult blockTrace = event.getTarget();
         BlockPos origin = blockTrace.getBlockPos();
 
-        ToolMode activeMode = ToolMode.None;
+        HandlerResult handlerResult = null;
 
-        // Find the active tool mode.
-        for (ToolMode candidateMode : MODE_ATTEMPT_ORDER) {
-            if (candidateMode.handler.isToolCorrectType(tool) && candidateMode.handler.doesStartingBlockQualify(level, player, tool, origin)) {
-                activeMode = candidateMode;
+        // Check if any tool-use handlers apply.
+        UseEventHammerHandler.UseEventInfo useEventInfo = new UseEventHammerHandler.UseEventInfo(origin, blockTrace.getDirection(), new UseOnContext(player, InteractionHand.MAIN_HAND, blockTrace), tool.action);
+        for (UseEventHammerHandler candidate : USE_HANDLERS) {
+            if (candidate.isToolCorrectType(tool) && candidate.doesStartingBlockQualify(level, origin, level.getBlockState(origin), useEventInfo)) {
+                handlerResult = new HandlerResult(candidate.iterCandidateBlockPositions(player, tool, useEventInfo.direction(), useEventInfo.pos(), useEventInfo), candidate.getWireframeColor());
                 break;
             }
         }
 
-        // If no tool mode qualifies, do nothing.
-        if (activeMode == ToolMode.None) {
+        // If no use-tool handler qualifies, check mining handlers.
+        MiningEventHammerHandler.MiningEventInfo miningEventInfo = new MiningEventHammerHandler.MiningEventInfo(player, tool, origin, blockTrace.getDirection());
+        for (MiningEventHammerHandler candidate : MINING_HANDLERS) {
+            if (candidate.isToolCorrectType(tool) && candidate.doesStartingBlockQualify(level, origin, level.getBlockState(origin), miningEventInfo)) {
+                handlerResult = new HandlerResult(candidate.iterCandidateBlockPositions(player, tool, useEventInfo.direction(), useEventInfo.pos(), miningEventInfo), candidate.getWireframeColor());
+                break;
+            }
+        }
+
+        // If no handlers qualify, don't render anything.
+        if (handlerResult == null) {
             return;
         }
 
-        Iterator<BlockPos> breakableBlocks = HammerShapeHelper.getCandidateBlockPositions(
-                player,
-                tool,
-                Minecraft.getInstance().hitResult,
-                origin,
-                activeMode.handler
-        );
-
-        if (!breakableBlocks.hasNext()) {
+        if (!handlerResult.blocks.hasNext()) {
             return;
         }
 
@@ -144,14 +140,14 @@ public class ToolRenderEvents {
         CollisionContext collisionContext = CollisionContext.of(viewEntity);
 
         do {
-            BlockPos pos = breakableBlocks.next();
+            BlockPos pos = handlerResult.blocks.next();
 
             if (level.getWorldBorder().isWithinBounds(pos)) {
                 Vec3 camPos = camera.getPosition();
                 rendered++;
-                highlightBlock(pos, matrices, level, camPos, buffers, 0.0f, activeMode.r, activeMode.g, activeMode.b);
+                highlightBlock(pos, matrices, level, camPos, buffers, 0.0f, handlerResult.wireframeColor.r, handlerResult.wireframeColor.g, handlerResult.wireframeColor.b);
             }
-        } while (rendered < MAX_BLOCKS && breakableBlocks.hasNext());
+        } while (rendered < MAX_BLOCKS && handlerResult.blocks.hasNext());
 
         matrices.popPose();
         event.setCanceled(true);

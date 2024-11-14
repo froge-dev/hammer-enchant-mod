@@ -1,9 +1,8 @@
 package com.frogedev.hammer_enchant.event;
 
 import com.frogedev.hammer_enchant.ModConfig;
-import com.frogedev.hammer_enchant.util.HammerShapeHelper;
-import com.frogedev.hammer_enchant.util.HammerHandler;
 import com.frogedev.hammer_enchant.util.HammerTypes;
+import com.frogedev.hammer_enchant.util.MiningEventHammerHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -11,7 +10,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -22,10 +20,6 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class HammerEvents {
-    public static HammerHandler[] rightClickOnBlockHandlers = {
-        HammerTypes.TillingHandler.INSTANCE
-    };
-
     @SubscribeEvent
     // Called on right-click.
     public static void onToolModifyBlock(BlockEvent.BlockToolModificationEvent event) {
@@ -33,15 +27,8 @@ public class HammerEvents {
             return;
         }
 
-
-        for(HammerHandler handler : rightClickOnBlockHandlers){
-            if (handler.tryPerformUse(
-                    event.getContext(),
-                    event.getToolAction()
-            )) {
-                event.setCanceled(true);
-                break;
-            }
+        if (HammerTypes.UniversalToolUseHandler.INSTANCE.tryPerformUse(event)) {
+            event.setCanceled(true);
         }
     }
 
@@ -52,13 +39,9 @@ public class HammerEvents {
             return;
         }
 
-        if (HammerTypes.MiningHandler.INSTANCE.tryPerform(
-                player,
-                player.getMainHandItem(),
-                event.getPos(),
-                // Server-side raycast. For client, use Minecraft.instance.hitResult.
-                event.getPlayer().pick(event.getPlayer().getBlockReach(), 0F, false)
-        )) {
+        MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(player, player.getMainHandItem(), event.getPos(), player.getDirection());
+
+        if (HammerTypes.UniversalMiningHandler.INSTANCE.tryPerformMine(eventInfo)) {
             event.setCanceled(true);
         }
     }
@@ -70,43 +53,47 @@ public class HammerEvents {
             return;
         }
 
-        Player player = event.getEntity();
-        BlockPos breakPos = event.getPosition().get();
-        ItemStack tool = player.getMainHandItem();
-        Level level = player.level();
+        Player player0 = event.getEntity();
+        if(player0 instanceof ServerPlayer player){
+            BlockPos breakPos = event.getPosition().get();
+            ItemStack tool = player.getMainHandItem();
+            Level level = player.level();
 
-        Iterator<BlockPos> blockPosIter = HammerTypes.MiningHandler.INSTANCE.getCandidateBlockPositions(
-                player,
-                tool,
-                player.pick(player.getBlockReach(), 0F, false),
-                breakPos
-        );
+            MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(player, tool, breakPos, player.getDirection());
 
+            Iterator<BlockPos> blockPosIter = HammerTypes.UniversalMiningHandler.INSTANCE.iterCandidateBlockPositions(
+                    player,
+                    tool,
+                    player.getDirection(),
+                    breakPos,
+                    eventInfo
+            );
 
-        if (!blockPosIter.hasNext()) {
-            return;
-        }
+            if (!blockPosIter.hasNext()) {
+                return;
+            }
 
-        List<Float> allDestroyTimes = new ArrayList<>();
-        while (blockPosIter.hasNext()) {
-            BlockPos blockPos = blockPosIter.next();
-            BlockState blockState = level.getBlockState(blockPos);
-            allDestroyTimes.add(blockState.getBlock().defaultDestroyTime());
-        }
+            List<Float> allDestroyTimes = new ArrayList<>();
+            while (blockPosIter.hasNext()) {
+                BlockPos blockPos = blockPosIter.next();
+                BlockState blockState = level.getBlockState(blockPos);
+                allDestroyTimes.add(blockState.getBlock().defaultDestroyTime());
+            }
 
-        // Mining speed (s) is basically everything *but* block hardness (h).
-        // Let (t) be time to break.
-        //  normally: t=h/s
-        //  we want: t' = f(h1,h2,...)/s
-        //  we can only change (s), so we do: t' = h/s'
-        //      f(h1,h2,...})/s = h/s'
-        //      s' = s*h / f(h1,h2,...)
-        float centerDestroyTime = level.getBlockState(breakPos).getBlock().defaultDestroyTime();
-        float totalDestroyTime = ModConfig.MINING_SPEED_MODE.get().computeDestroyTime(centerDestroyTime, allDestroyTimes);
+            // Mining speed (s) is basically everything *but* block hardness (h).
+            // Let (t) be time to break.
+            //  normally: t=h/s
+            //  we want: t' = f(h1,h2,...)/s
+            //  we can only change (s), so we do: t' = h/s'
+            //      f(h1,h2,...})/s = h/s'
+            //      s' = s*h / f(h1,h2,...)
+            float centerDestroyTime = level.getBlockState(breakPos).getBlock().defaultDestroyTime();
+            float totalDestroyTime = ModConfig.MINING_SPEED_MODE.get().computeDestroyTime(centerDestroyTime, allDestroyTimes);
 
-        if (totalDestroyTime > 0) {
-            float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
-            event.setNewSpeed(newSpeed);
+            if (totalDestroyTime > 0) {
+                float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
+                event.setNewSpeed(newSpeed);
+            }
         }
     }
 }
