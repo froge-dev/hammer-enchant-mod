@@ -18,14 +18,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class HammerTypes {
-    public static boolean canTill(Level level, BlockPos blockPos) {
-        return level.getBlockState(blockPos).is(ModTags.Blocks.TILLABLE_BLOCK_TAG) && level.getBlockState(blockPos.above()).isAir();
-    }
 
-    public static class ToolUseHandler implements HammerShapeHelper.MiningShapeHandler {
-        private static final Set<UUID> playerTracker = new HashSet<>();
-        public static final ToolUseHandler INSTANCE = new ToolUseHandler();
+public class HammerTypes {
+    public static class ToolUseHandler extends HammerHandler {
 
         @Override
         public boolean isToolCorrectType(ItemStack tool) {
@@ -33,33 +28,40 @@ public class HammerTypes {
         }
 
         @Override
-        public void perform(Level level, ServerPlayer player, ItemStack tool, List<BlockPos> blocks) {
-
+        public boolean doesStartingBlockQualify(Level level, Player player, ItemStack tool, BlockPos pos) {
+            BlockState newState = level.getBlockState(pos).getToolModifiedState(useContext, toolAction, true);
+            return newState != null;
         }
 
         @Override
-        public boolean testOrigin(Level level, Player player, ItemStack tool, BlockPos pos) {
-            return true;
+        public boolean doesNeighborBlockQualify(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState) {
+            return doesStartingBlockQualify(level, player, tool, neighborPos);
         }
 
         @Override
-        public Set<UUID> playerTracker() {
-            return playerTracker;
-        }
-
-        @Override
-        public boolean testNeighbor(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState) {
-            return true;
+        void perform(Level level, ServerPlayer player, ItemStack tool, List<BlockPos> blocks) {
+            for(BlockPos pos : blocks){
+                level.getBlockState(pos).getToolModifiedState(useContext, toolAction, false);
+            }
         }
     }
 
-    public static class TillingHandler implements HammerShapeHelper.MiningShapeHandler {
-        private static final Set<UUID> playerTracker = new HashSet<>();
+    public static class TillingHandler extends HammerHandler {
         public static final TillingHandler INSTANCE = new TillingHandler();
 
         @Override
         public boolean isToolCorrectType(ItemStack tool) {
             return tool.getItem() instanceof HoeItem;
+        }
+
+        @Override
+        public boolean doesStartingBlockQualify(Level level, Player player, ItemStack tool, BlockPos pos) {
+            return level.getBlockState(pos).is(ModTags.Blocks.TILLABLE_BLOCK_TAG) && level.getBlockState(pos.above()).isAir();
+        }
+
+        @Override
+        public boolean doesNeighborBlockQualify(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState) {
+            return doesStartingBlockQualify(level, player, tool, neighborPos);
         }
 
         @Override
@@ -75,30 +77,45 @@ public class HammerTypes {
             player.getMainHandItem().hurtAndBreak(damagePenalty, player, (a) -> {
             });
         }
-
-        @Override
-        public boolean testNeighbor(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState) {
-            return canTill(level, neighborPos);
-        }
-
-        @Override
-        public boolean testOrigin(Level level, Player player, ItemStack tool, BlockPos pos) {
-            return canTill(level, pos);
-        }
-
-        @Override
-        public Set<UUID> playerTracker() {
-            return playerTracker;
-        }
     }
 
-    public static class MiningHandler implements HammerShapeHelper.MiningShapeHandler {
-        private static final Set<UUID> playerTracker = new HashSet<>();
+    public static class MiningHandler extends HammerHandler {
         public static final MiningHandler INSTANCE = new MiningHandler();
 
         @Override
         public boolean isToolCorrectType(ItemStack tool) {
             return true;
+        }
+
+        @Override
+        public boolean doesStartingBlockQualify(Level level, Player player, ItemStack tool, BlockPos pos) {
+            BlockState originBlockState = level.getBlockState(pos);
+
+            Item toolItem = tool.getItem();
+
+            if (toolItem instanceof HoeItem) {
+                // Allow hoe to mine any instamineable block.
+                return toolItem.isCorrectToolForDrops(originBlockState) || originBlockState.getDestroySpeed(level, pos) <= ModConfig.INSTAMINE_THRESHOLD.get();
+            } else {
+                return toolItem.isCorrectToolForDrops(originBlockState) && originBlockState.getDestroySpeed(level, pos) > ModConfig.INSTAMINE_THRESHOLD.get();
+            }
+        }
+
+        @Override
+        public boolean doesNeighborBlockQualify(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState) {
+            if(!this.doesStartingBlockQualify(level, player, tool, neighborPos)){
+                return false;
+            }
+
+            float originDestroySpeed = originBlockState.getDestroySpeed(level, originPos);
+            float neighborDestroySpeed = neighborBlockState.getDestroySpeed(level, neighborPos);
+            if (originDestroySpeed <= ModConfig.INSTAMINE_THRESHOLD.get()) {
+                // If origin is instamined, only mine other instamineable blocks.
+                return neighborDestroySpeed <= ModConfig.INSTAMINE_THRESHOLD.get();
+            } else {
+                // If origin is not instamined, only mine blocks with destroy speed within cheat limit.
+                return neighborDestroySpeed <= originDestroySpeed + ModConfig.MINING_SPEED_CHEAT_CAP.get();
+            }
         }
 
         @Override
@@ -123,47 +140,6 @@ public class HammerTypes {
                 tool.hurtAndBreak(0, player, (a) -> {
                 });
             }
-        }
-
-        @Override
-        public boolean testNeighbor(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState) {
-            float originDestroySpeed = originBlockState.getDestroySpeed(level, originPos);
-            float neighborDestroySpeed = neighborBlockState.getDestroySpeed(level, neighborPos);
-
-            if (tool.getItem() instanceof HoeItem) {
-                // Allow hoe to mine any instamineable block.
-                return tool.isCorrectToolForDrops(neighborBlockState) || neighborDestroySpeed <= ModConfig.INSTAMINE_THRESHOLD.get();
-            } else {
-                if (!tool.isCorrectToolForDrops(neighborBlockState)) {
-                    return false;
-                }
-                if (originDestroySpeed <= ModConfig.INSTAMINE_THRESHOLD.get()) {
-                    // If origin is instamined, only mine other instamineable blocks.
-                    return neighborDestroySpeed <= ModConfig.INSTAMINE_THRESHOLD.get();
-                } else {
-                    // If origin is not instamined, only mine blocks with destroy speed within cheat limit.
-                    return neighborDestroySpeed <= originDestroySpeed + ModConfig.MINING_SPEED_CHEAT_CAP.get();
-                }
-            }
-        }
-
-        @Override
-        public boolean testOrigin(Level level, Player player, ItemStack tool, BlockPos pos) {
-            BlockState originBlockState = level.getBlockState(pos);
-
-            Item toolItem = tool.getItem();
-
-            if (toolItem instanceof HoeItem) {
-                // Allow hoe to mine any instamineable block.
-                return toolItem.isCorrectToolForDrops(originBlockState) || originBlockState.getDestroySpeed(level, pos) <= ModConfig.INSTAMINE_THRESHOLD.get();
-            } else {
-                return toolItem.isCorrectToolForDrops(originBlockState) && originBlockState.getDestroySpeed(level, pos) > ModConfig.INSTAMINE_THRESHOLD.get();
-            }
-        }
-
-        @Override
-        public Set<UUID> playerTracker() {
-            return playerTracker;
         }
     }
 }

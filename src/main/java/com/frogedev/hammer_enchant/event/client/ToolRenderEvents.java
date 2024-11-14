@@ -1,7 +1,7 @@
 package com.frogedev.hammer_enchant.event.client;
 
 import com.frogedev.hammer_enchant.HammerEnchantMod;
-import com.frogedev.hammer_enchant.util.HammerHelper;
+import com.frogedev.hammer_enchant.util.HammerHandler;
 import com.frogedev.hammer_enchant.util.HammerShapeHelper;
 import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -59,9 +59,9 @@ public class ToolRenderEvents {
         Till(HammerTypes.TillingHandler.INSTANCE, 0.8F, 1F, 0F);
 
         final float r, g, b;
-        final HammerShapeHelper.MiningShapeHandler handler;
+        final HammerHandler handler;
 
-        ToolMode(HammerShapeHelper.MiningShapeHandler handler, float r, float g, float b) {
+        ToolMode(HammerHandler handler, float r, float g, float b) {
             this.handler = handler;
             this.r = r;
             this.g = g;
@@ -95,7 +95,7 @@ public class ToolRenderEvents {
         }
 
         ItemStack tool = player.getMainHandItem();
-        if (!HammerHelper.hasHammerModifiers(tool)) {
+        if (!HammerHandler.hasHammerModifiers(tool)) {
             return;
         }
 
@@ -106,7 +106,7 @@ public class ToolRenderEvents {
 
         // Find the active tool mode.
         for (ToolMode candidateMode : MODE_ATTEMPT_ORDER) {
-            if (candidateMode.handler.isToolCorrectType(tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
+            if (candidateMode.handler.isToolCorrectType(tool) && candidateMode.handler.doesStartingBlockQualify(level, player, tool, origin)) {
                 activeMode = candidateMode;
                 break;
             }

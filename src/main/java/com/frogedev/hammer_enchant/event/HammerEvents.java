@@ -1,8 +1,8 @@
 package com.frogedev.hammer_enchant.event;
 
 import com.frogedev.hammer_enchant.ModConfig;
-import com.frogedev.hammer_enchant.util.HammerHelper;
 import com.frogedev.hammer_enchant.util.HammerShapeHelper;
+import com.frogedev.hammer_enchant.util.HammerHandler;
 import com.frogedev.hammer_enchant.util.HammerTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,40 +22,27 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class HammerEvents {
+    public static HammerHandler[] rightClickOnBlockHandlers = {
+        HammerTypes.TillingHandler.INSTANCE
+    };
+
     @SubscribeEvent
+    // Called on right-click.
     public static void onToolModifyBlock(BlockEvent.BlockToolModificationEvent event) {
         if (!(event.getPlayer() instanceof ServerPlayer player)) {
             return;
         }
 
-        if (HammerHelper.tryPerformUse(
-                event.getContext(),
-                event.getToolAction(),
-                HammerTypes.ToolUseHandler.INSTANCE
-        )) {
-            event.setCanceled(true);
-        }
-    }
 
-    // Called on right-click.
-    @SubscribeEvent
-    public static void onPlayerInteract(PlayerInteractEvent someEvent) {
-        if (!(someEvent.getEntity() instanceof ServerPlayer player)) {
-            return;
+        for(HammerHandler handler : rightClickOnBlockHandlers){
+            if (handler.tryPerformUse(
+                    event.getContext(),
+                    event.getToolAction()
+            )) {
+                event.setCanceled(true);
+                break;
+            }
         }
-
-//        if (someEvent instanceof PlayerInteractEvent.RightClickBlock event) {
-//            ItemStack tool = event.getItemStack();
-//            if (HammerHelper.tryPerform(
-//                    player,
-//                    tool,
-//                    event.getPos(),
-//                    event.getHitVec(),
-//                    HammerTypes.TillingHandler.INSTANCE
-//            )) {
-//                event.setCanceled(true);
-//            }
-//        }
     }
 
     // On conclusion of block broken.
@@ -65,13 +52,12 @@ public class HammerEvents {
             return;
         }
 
-        if (HammerHelper.tryPerform(
+        if (HammerTypes.MiningHandler.INSTANCE.tryPerform(
                 player,
                 player.getMainHandItem(),
                 event.getPos(),
                 // Server-side raycast. For client, use Minecraft.instance.hitResult.
-                event.getPlayer().pick(event.getPlayer().getBlockReach(), 0F, false),
-                HammerTypes.MiningHandler.INSTANCE
+                event.getPlayer().pick(event.getPlayer().getBlockReach(), 0F, false)
         )) {
             event.setCanceled(true);
         }
@@ -89,12 +75,11 @@ public class HammerEvents {
         ItemStack tool = player.getMainHandItem();
         Level level = player.level();
 
-        Iterator<BlockPos> blockPosIter = HammerShapeHelper.getCandidateBlockPositions(
+        Iterator<BlockPos> blockPosIter = HammerTypes.MiningHandler.INSTANCE.getCandidateBlockPositions(
                 player,
                 tool,
                 player.pick(player.getBlockReach(), 0F, false),
-                breakPos,
-                HammerTypes.MiningHandler.INSTANCE
+                breakPos
         );
 
 
