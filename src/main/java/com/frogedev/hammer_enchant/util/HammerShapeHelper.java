@@ -4,31 +4,22 @@ import com.frogedev.hammer_enchant.ModEnchantments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.LiquidBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.fluids.IFluidBlock;
 
 import java.util.*;
 
 public class HammerShapeHelper {
-    public static Iterator<BlockPos> getAllBlockPositions(Player player, ItemStack tool, Direction direction, BlockPos origin) {
+    public static Iterator<BlockPos> getAllBlockPositions(IHammerHandler.IEventInfo info) {
 //        if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK) {
 //            return Collections.emptyIterator();
 //        }
 
-        boolean facingEastWest = Math.floorMod(Math.round(player.getYRot() + 45), 180) > 90;
-
         // Get the world axes that correspond to the mining shape's depth/width/height.
-        Direction depthDir = direction.getOpposite();
+        Direction depthDir = info.direction().getOpposite();
         Direction heightDir;
         Direction widthDir;
         if (depthDir.getAxis().isVertical()) {
-            if (facingEastWest) {
+            if (info.planarDirection().getAxis() == Direction.Axis.X) {
                 heightDir = Direction.EAST;
                 widthDir = Direction.SOUTH;
             } else {
@@ -41,11 +32,11 @@ public class HammerShapeHelper {
         }
 
         // Get the corners of the mining shape.
-        Vec3i selectionSize = getMiningSize(tool);
-        BlockPos minCorner = origin
+        Vec3i selectionSize = getMiningSize(info.tool());
+        BlockPos minCorner = info.originPos()
                 .relative(heightDir, -selectionSize.getY())
                 .relative(widthDir, -selectionSize.getZ());
-        BlockPos maxCorner = origin
+        BlockPos maxCorner = info.originPos()
                 .relative(heightDir, selectionSize.getY())
                 .relative(widthDir, selectionSize.getZ())
                 .relative(depthDir, selectionSize.getX());

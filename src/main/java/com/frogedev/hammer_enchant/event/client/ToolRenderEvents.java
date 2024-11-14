@@ -65,12 +65,8 @@ public class ToolRenderEvents {
         return null;
     }
 
-    private static final UseEventHammerHandler[] USE_HANDLERS = {
+    private static final GenericHammerHandler[] USE_HANDLERS = {
             HammerTypes.UniversalToolUseHandler.INSTANCE,
-    };
-
-    private static final MiningEventHammerHandler[] MINING_HANDLERS = {
-            HammerTypes.UniversalMiningHandler.INSTANCE,
     };
 
     /**
@@ -87,7 +83,7 @@ public class ToolRenderEvents {
         }
 
         ItemStack tool = player.getMainHandItem();
-        if (!GenericHammerHandler.hasHammerModifiers(tool)) {
+        if (!IHammerHandler.hasHammerModifiers(tool)) {
             return;
         }
 
@@ -98,23 +94,7 @@ public class ToolRenderEvents {
 
         HandlerResult handlerResult = null;
 
-        // Check if any tool-use handlers apply.
-        UseEventHammerHandler.UseEventInfo useEventInfo = new UseEventHammerHandler.UseEventInfo(origin, blockTrace.getDirection(), new UseOnContext(player, InteractionHand.MAIN_HAND, blockTrace), tool.action);
-        for (UseEventHammerHandler candidate : USE_HANDLERS) {
-            if (candidate.isToolCorrectType(tool) && candidate.doesStartingBlockQualify(level, origin, level.getBlockState(origin), useEventInfo)) {
-                handlerResult = new HandlerResult(candidate.iterCandidateBlockPositions(player, tool, useEventInfo.direction(), useEventInfo.pos(), useEventInfo), candidate.getWireframeColor());
-                break;
-            }
-        }
 
-        // If no use-tool handler qualifies, check mining handlers.
-        MiningEventHammerHandler.MiningEventInfo miningEventInfo = new MiningEventHammerHandler.MiningEventInfo(player, tool, origin, blockTrace.getDirection());
-        for (MiningEventHammerHandler candidate : MINING_HANDLERS) {
-            if (candidate.isToolCorrectType(tool) && candidate.doesStartingBlockQualify(level, origin, level.getBlockState(origin), miningEventInfo)) {
-                handlerResult = new HandlerResult(candidate.iterCandidateBlockPositions(player, tool, useEventInfo.direction(), useEventInfo.pos(), miningEventInfo), candidate.getWireframeColor());
-                break;
-            }
-        }
 
         // If no handlers qualify, don't render anything.
         if (handlerResult == null) {
@@ -164,98 +144,98 @@ public class ToolRenderEvents {
         LevelRenderer.renderVoxelShape(poseStack, vertexBuilder, shape, -camPos.x, -camPos.y, -camPos.z, pRed, pGreen, pBlue, 1.0F, false);
     }
 
-    /**
-     * Renders the block damage process on the extra blocks
-     */
-    @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
-            return;
-        }
-
-        Player player = Minecraft.getInstance().player;
-        Level level = player.level();
-
-        ItemStack tool = player.getMainHandItem();
-        if (!HammerHelper.hasHammerModifiers(tool)) {
-            return;
-        }
-
-        if (!(Minecraft.getInstance().hitResult instanceof BlockHitResult blockTrace)) {
-            return;
-        }
-
-        BlockPos origin = blockTrace.getBlockPos();
-        ToolMode activeMode = ToolMode.None;
-
-        // Find the active tool mode.
-        for (ToolMode candidateMode : MODE_ATTEMPT_ORDER) {
-            if (candidateMode.handler.isToolCorrectType(tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
-                activeMode = candidateMode;
-                break;
-            }
-        }
-
-        // If no tool mode qualifies, do nothing.
-        if (activeMode == ToolMode.None) {
-            return;
-        }
-
-        Iterator<BlockPos> breakableBlocks = HammerShapeHelper.getCandidateBlockPositions(
-                player,
-                tool,
-                Minecraft.getInstance().hitResult,
-                origin,
-                activeMode.handler
-        );
-
-        LevelRenderer levelRenderer = Minecraft.getInstance().levelRenderer;
-        Int2ObjectMap<BlockDestructionProgress> destroyingBlocks = getBlockDestructionProgress(levelRenderer);
-
-        if (destroyingBlocks == null) {
-            return;
-        }
-
-        BlockDestructionProgress destroyProgress = null;
-        for (Int2ObjectMap.Entry<BlockDestructionProgress> entry : destroyingBlocks.int2ObjectEntrySet()) {
-            if (entry.getValue().getPos().equals(origin)) {
-                destroyProgress = entry.getValue();
-                break;
-            }
-        }
-        if (destroyProgress == null) {
-            return;
-        }
-
-        BlockRenderDispatcher blockRenderer = Minecraft.getInstance().getBlockRenderer();
-        PoseStack matrices = event.getPoseStack();
-        PoseStack poseStack = event.getPoseStack();
-        RenderBuffers renderBuffers = Minecraft.getInstance().renderBuffers();
-        MultiBufferSource.BufferSource breakBufferSource = renderBuffers.crumblingBufferSource();
-        RenderType destroyRenderType = ModelBakery.DESTROY_TYPES.get(destroyProgress.getProgress());
-
-        // Translate back to origin
-        Camera camera = event.getCamera();
-        double x = camera.getPosition().x;
-        double y = camera.getPosition().y;
-        double z = camera.getPosition().z;
-        poseStack.pushPose();
-        poseStack.translate(-x, -y, -z);
-
-        while (breakableBlocks.hasNext()) {
-            BlockPos blockPos = breakableBlocks.next();
-            BlockState blockState = level.getBlockState(blockPos);
-
-            poseStack.pushPose();
-            poseStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-            PoseStack.Pose lastPose = poseStack.last();
-
-            VertexConsumer vertexConsumer = new SheetedDecalTextureGenerator(breakBufferSource.getBuffer(destroyRenderType), lastPose.pose(), lastPose.normal(), 1.0F);
-            blockRenderer.renderBreakingTexture(blockState, blockPos, level, poseStack, vertexConsumer, ModelData.EMPTY);
-
-            poseStack.popPose();
-        }
-
-        poseStack.popPose();
-    }
+//    /**
+//     * Renders the block damage process on the extra blocks
+//     */
+//    @SubscribeEvent
+//    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+//        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+//            return;
+//        }
+//
+//        Player player = Minecraft.getInstance().player;
+//        Level level = player.level();
+//
+//        ItemStack tool = player.getMainHandItem();
+//        if (!HammerHelper.hasHammerModifiers(tool)) {
+//            return;
+//        }
+//
+//        if (!(Minecraft.getInstance().hitResult instanceof BlockHitResult blockTrace)) {
+//            return;
+//        }
+//
+//        BlockPos origin = blockTrace.getBlockPos();
+//        ToolMode activeMode = ToolMode.None;
+//
+//        // Find the active tool mode.
+//        for (ToolMode candidateMode : MODE_ATTEMPT_ORDER) {
+//            if (candidateMode.handler.isToolCorrectType(tool) && candidateMode.handler.testOrigin(level, player, tool, origin)) {
+//                activeMode = candidateMode;
+//                break;
+//            }
+//        }
+//
+//        // If no tool mode qualifies, do nothing.
+//        if (activeMode == ToolMode.None) {
+//            return;
+//        }
+//
+//        Iterator<BlockPos> breakableBlocks = HammerShapeHelper.getCandidateBlockPositions(
+//                player,
+//                tool,
+//                Minecraft.getInstance().hitResult,
+//                origin,
+//                activeMode.handler
+//        );
+//
+//        LevelRenderer levelRenderer = Minecraft.getInstance().levelRenderer;
+//        Int2ObjectMap<BlockDestructionProgress> destroyingBlocks = getBlockDestructionProgress(levelRenderer);
+//
+//        if (destroyingBlocks == null) {
+//            return;
+//        }
+//
+//        BlockDestructionProgress destroyProgress = null;
+//        for (Int2ObjectMap.Entry<BlockDestructionProgress> entry : destroyingBlocks.int2ObjectEntrySet()) {
+//            if (entry.getValue().getPos().equals(origin)) {
+//                destroyProgress = entry.getValue();
+//                break;
+//            }
+//        }
+//        if (destroyProgress == null) {
+//            return;
+//        }
+//
+//        BlockRenderDispatcher blockRenderer = Minecraft.getInstance().getBlockRenderer();
+//        PoseStack matrices = event.getPoseStack();
+//        PoseStack poseStack = event.getPoseStack();
+//        RenderBuffers renderBuffers = Minecraft.getInstance().renderBuffers();
+//        MultiBufferSource.BufferSource breakBufferSource = renderBuffers.crumblingBufferSource();
+//        RenderType destroyRenderType = ModelBakery.DESTROY_TYPES.get(destroyProgress.getProgress());
+//
+//        // Translate back to origin
+//        Camera camera = event.getCamera();
+//        double x = camera.getPosition().x;
+//        double y = camera.getPosition().y;
+//        double z = camera.getPosition().z;
+//        poseStack.pushPose();
+//        poseStack.translate(-x, -y, -z);
+//
+//        while (breakableBlocks.hasNext()) {
+//            BlockPos blockPos = breakableBlocks.next();
+//            BlockState blockState = level.getBlockState(blockPos);
+//
+//            poseStack.pushPose();
+//            poseStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+//            PoseStack.Pose lastPose = poseStack.last();
+//
+//            VertexConsumer vertexConsumer = new SheetedDecalTextureGenerator(breakBufferSource.getBuffer(destroyRenderType), lastPose.pose(), lastPose.normal(), 1.0F);
+//            blockRenderer.renderBreakingTexture(blockState, blockPos, level, poseStack, vertexConsumer, ModelData.EMPTY);
+//
+//            poseStack.popPose();
+//        }
+//
+//        poseStack.popPose();
+//    }
 }
