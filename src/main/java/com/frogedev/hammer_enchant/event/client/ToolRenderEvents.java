@@ -1,11 +1,11 @@
 package com.frogedev.hammer_enchant.event.client;
 
+import com.frogedev.hammer_enchant.HammerEnchantMod;
 import com.frogedev.hammer_enchant.util.HammerHelper;
+import com.frogedev.hammer_enchant.util.HammerShapeHelper;
 import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.frogedev.hammer_enchant.HammerEnchantMod;
-import com.frogedev.hammer_enchant.util.HammerShapeHelper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
