@@ -4,7 +4,6 @@ import com.frogedev.hammer_enchant.ModEnchantments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -17,21 +16,7 @@ import net.minecraftforge.fluids.IFluidBlock;
 import java.util.*;
 
 public class HammerShapeHelper {
-    public interface MiningShapeHandler extends HammerShapeNeighborPredicate {
-        boolean isToolCorrectType(ItemStack tool);
-
-        void perform(Level level, ServerPlayer player, ItemStack tool, List<BlockPos> blocks);
-
-        boolean testOrigin(Level level, Player player, ItemStack tool, BlockPos pos);
-
-        Set<UUID> playerTracker();
-    }
-
-    public interface HammerShapeNeighborPredicate {
-        boolean testNeighbor(Level level, Player player, ItemStack tool, BlockPos originPos, BlockState originBlockState, BlockPos neighborPos, BlockState neighborBlockState);
-    }
-
-    public static Iterator<BlockPos> getCandidateBlockPositions(Player player, ItemStack tool, HitResult hitResult, BlockPos origin, HammerShapeNeighborPredicate neighborPredicate) {
+    public static Iterator<BlockPos> getCandidateBlockPositions(Player player, ItemStack tool, HitResult hitResult, BlockPos origin, HammerHandler handler) {
         Level level = player.level();
         BlockState originBlockState = level.getBlockState(origin);
 
@@ -44,7 +29,7 @@ public class HammerShapeHelper {
                 return false;
             }
 
-            return neighborPredicate.testNeighbor(level, player, tool, origin, originBlockState, blockPos, blockState);
+            return handler.doesNeighborBlockQualify(level, player, tool, origin, originBlockState, blockPos, blockState);
         });
     }
 
