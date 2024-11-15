@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.*;
 
 public class HammerShapeHelper {
-    public static Iterator<BlockPos> getAllBlockPositions(IHammerHandler.IEventInfo info) {
+    public static Iterator<BlockPos> getAllBlockPositions(BaseHammerHandler.IEventInfo info) {
 //        if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK) {
 //            return Collections.emptyIterator();
 //        }

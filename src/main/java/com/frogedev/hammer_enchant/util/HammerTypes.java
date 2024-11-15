@@ -4,7 +4,6 @@ import com.frogedev.hammer_enchant.ModConfig;
 import com.frogedev.hammer_enchant.event.client.ToolRenderEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -24,13 +23,13 @@ public class HammerTypes {
         }
 
         @Override
-        public boolean doesStartingBlockQualify(UseEventInfo info, BlockPos originPos, BlockState blockState) {
+        protected boolean doesStartingBlockQualify(UseEventInfo info, BlockPos originPos, BlockState blockState) {
             BlockState newState = blockState.getToolModifiedState(info.useOnContext(), info.toolAction(), true);
             return newState != null;
         }
 
         @Override
-        public boolean doesNeighborBlockQualify(UseEventInfo eventInfo, BlockPos originPos, BlockState originState, BlockPos neighborPos, BlockState neighborState) {
+        protected boolean doesNeighborBlockQualify(UseEventInfo eventInfo, BlockPos originPos, BlockState originState, BlockPos neighborPos, BlockState neighborState) {
             return doesStartingBlockQualify(eventInfo, neighborPos, neighborState);
         }
 
@@ -59,7 +58,7 @@ public class HammerTypes {
 
 
         @Override
-        public boolean doesStartingBlockQualify(MiningEventInfo miningEventInfo, BlockPos pos, BlockState blockState) {
+        protected boolean doesStartingBlockQualify(MiningEventInfo miningEventInfo, BlockPos pos, BlockState blockState) {
             Item toolItem = miningEventInfo.tool().getItem();
             Level level = miningEventInfo.player().level();
 
@@ -72,7 +71,7 @@ public class HammerTypes {
         }
 
         @Override
-        public boolean doesNeighborBlockQualify(MiningEventInfo miningEventInfo, BlockPos originPos, BlockState originState, BlockPos neighborPos, BlockState neighborState) {
+        protected boolean doesNeighborBlockQualify(MiningEventInfo miningEventInfo, BlockPos originPos, BlockState originState, BlockPos neighborPos, BlockState neighborState) {
             if(!this.doesStartingBlockQualify(miningEventInfo, neighborPos, neighborState)){
                 return false;
             }

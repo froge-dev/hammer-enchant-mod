@@ -9,11 +9,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.ToolAction;
 
 import javax.annotation.Nullable;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 // Hammer logic that does not depend on a specific EventType.
-public interface IHammerHandler {
-    interface IEventInfo {
+public abstract class BaseHammerHandler {
+    Set<UUID> playersActivelyUsing = new HashSet<>();
+
+    public final boolean isPlayerActivelyUsing(UUID playerUUID) {
+        return playersActivelyUsing.contains(playerUUID);
+    }
+
+    public interface IEventInfo {
         Player player();
         BlockPos originPos();
 
@@ -42,20 +50,20 @@ public interface IHammerHandler {
         }
     }
 
-    ToolRenderEvents.FloatColor getWireframeColor();
+    public record SimpleEventInfo(Player player, BlockPos originPos) implements IEventInfo {}
 
-    boolean isToolCorrectType(ItemStack tool);
+    public abstract ToolRenderEvents.FloatColor getWireframeColor();
 
-    boolean isPlayerActivelyUsing(UUID playerUUID);
+    public abstract boolean isToolCorrectType(ItemStack tool);
 
-    static boolean hasHammerModifiers(ItemStack tool) {
+    private static boolean hasHammerModifiers(ItemStack tool) {
         int surfaceEnchantLevel = tool.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_SURFACE_ENCHANTMENT.get());
         int depthEnchantLevel = tool.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_DEPTH_ENCHANTMENT.get());
         return surfaceEnchantLevel > 0 || depthEnchantLevel > 0;
     }
 
     // Perform various checks to see if the hammer should be used.
-    default boolean doPlayerAndToolMeetRequirements(
+    protected final boolean doPlayerAndToolMeetRequirements(
             Player player,
             ItemStack tool
     ) {
@@ -68,7 +76,7 @@ public interface IHammerHandler {
             return false;
         }
 
-        if (!IHammerHandler.hasHammerModifiers(tool)) {
+        if (!BaseHammerHandler.hasHammerModifiers(tool)) {
             return false;
         }
 

@@ -7,7 +7,6 @@ import com.frogedev.hammer_enchant.util.UseEventHammerHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -55,11 +54,16 @@ public class HammerEvents {
         }
 
         Player player = event.getEntity();
+        if (!(player instanceof ServerPlayer)) {
+            return;
+        }
+
         BlockPos breakPos = event.getPosition().get();
         Level level = player.level();
 
+
         MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(player, breakPos);
-        Iterator<BlockPos> blockPosIter = HammerTypes.UniversalMiningHandler.INSTANCE.iterCandidateBlockPositions(eventInfo);
+        Iterator<BlockPos> blockPosIter = HammerTypes.UniversalMiningHandler.INSTANCE.computeCandidatePositions(eventInfo);
 
         if (!blockPosIter.hasNext()) {
             return;

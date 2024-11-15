@@ -3,34 +3,25 @@ package com.frogedev.hammer_enchant.event.client;
 import com.frogedev.hammer_enchant.HammerEnchantMod;
 import com.frogedev.hammer_enchant.util.*;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.BlockDestructionProgress;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderHighlightEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
@@ -65,8 +56,11 @@ public class ToolRenderEvents {
         return null;
     }
 
-    private static final GenericHammerHandler[] USE_HANDLERS = {
+    private static final UseEventHammerHandler[] USE_HANDLERS = {
             HammerTypes.UniversalToolUseHandler.INSTANCE,
+    };
+    private static final MiningEventHammerHandler[] MINING_HANDLERS = {
+            HammerTypes.UniversalMiningHandler.INSTANCE,
     };
 
     /**
@@ -83,25 +77,32 @@ public class ToolRenderEvents {
         }
 
         ItemStack tool = player.getMainHandItem();
-        if (!IHammerHandler.hasHammerModifiers(tool)) {
-            return;
-        }
-
-        record HandlerResult(Iterator<BlockPos> blocks, FloatColor wireframeColor){}
-
         BlockHitResult blockTrace = event.getTarget();
         BlockPos origin = blockTrace.getBlockPos();
 
+        record HandlerResult(Iterator<BlockPos> blocks, FloatColor wireframeColor){}
         HandlerResult handlerResult = null;
 
+        // See if any tool-use handlers qualify.
+        for(UseEventHammerHandler handler : USE_HANDLERS){
+            Iterator<BlockPos> blocks = handler.computeCandidatePositions(handler.upgradeEventInfo(new BaseHammerHandler.SimpleEventInfo(player, origin)));
+            if(blocks.hasNext()){
+                handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
+            }
+        }
 
+        // See if any mining handlers qualify.
+        if(handlerResult == null){
+            for(MiningEventHammerHandler handler : MINING_HANDLERS){
+                Iterator<BlockPos> blocks = handler.computeCandidatePositions(handler.upgradeEventInfo(new BaseHammerHandler.SimpleEventInfo(player, origin)));
+                if(blocks.hasNext()){
+                    handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
+                }
+            }
+        }
 
         // If no handlers qualify, don't render anything.
         if (handlerResult == null) {
-            return;
-        }
-
-        if (!handlerResult.blocks.hasNext()) {
             return;
         }
 
