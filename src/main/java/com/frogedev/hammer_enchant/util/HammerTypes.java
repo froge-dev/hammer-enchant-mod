@@ -57,6 +57,7 @@ public class HammerTypes {
             return true;
         }
 
+
         @Override
         public boolean doesStartingBlockQualify(MiningEventInfo miningEventInfo, BlockPos pos, BlockState blockState) {
             Item toolItem = miningEventInfo.tool().getItem();

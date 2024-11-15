@@ -8,4 +8,9 @@ import net.minecraft.world.item.ItemStack;
 abstract public class MiningEventHammerHandler extends GenericHammerHandler<MiningEventHammerHandler.MiningEventInfo> {
     public record MiningEventInfo(Player player, BlockPos originPos) implements IEventInfo {
     }
+
+    @Override
+    public MiningEventInfo upgradeEventInfo(IEventInfo base) {
+        return new MiningEventInfo(base.player(), base.originPos());
+    }
 }

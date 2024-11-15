@@ -5,6 +5,7 @@ import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.frogedev.hammer_enchant.util.MiningEventHammerHandler;
 import com.frogedev.hammer_enchant.util.UseEventHammerHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -23,9 +24,9 @@ public class HammerEvents {
     @SubscribeEvent
     // Called on right-click.
     public static void onToolModifyBlock(BlockEvent.BlockToolModificationEvent event) {
-//        if (!(event.getPlayer() instanceof ServerPlayer player)) {
-//            return;
-//        }
+        if (!(event.getPlayer() instanceof ServerPlayer)) {
+            return;
+        }
 
         UseEventHammerHandler.UseEventInfo eventInfo = new UseEventHammerHandler.UseEventInfo(event.getContext(), event.getToolAction());
         if (HammerTypes.UniversalToolUseHandler.INSTANCE.tryPerform(eventInfo)) {
@@ -36,9 +37,9 @@ public class HammerEvents {
     // On conclusion of block broken.
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
-//        if (!(event.getPlayer() instanceof ServerPlayer player)) {
-//            return;
-//        }
+        if (!(event.getPlayer() instanceof ServerPlayer)) {
+            return;
+        }
 
         MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(event.getPlayer(), event.getPos());
         if (HammerTypes.UniversalMiningHandler.INSTANCE.tryPerform(eventInfo)) {
@@ -55,7 +56,6 @@ public class HammerEvents {
 
         Player player = event.getEntity();
         BlockPos breakPos = event.getPosition().get();
-        ItemStack tool = player.getMainHandItem();
         Level level = player.level();
 
         MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(player, breakPos);

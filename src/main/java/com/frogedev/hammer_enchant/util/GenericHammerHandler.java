@@ -1,7 +1,6 @@
 package com.frogedev.hammer_enchant.util;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -13,13 +12,15 @@ import java.util.*;
 
 import static com.frogedev.hammer_enchant.util.HammerShapeHelper.getAllBlockPositions;
 
-public abstract class GenericHammerHandler<EventInfo extends IHammerHandler.IEventInfo>  implements IHammerHandler {
+public abstract class GenericHammerHandler<EventInfo extends IHammerHandler.IEventInfo> implements IHammerHandler {
     Set<UUID> playersActivelyUsing = new HashSet<>();
 
     @Override
     public boolean isPlayerActivelyUsing(UUID playerUUID) {
         return playersActivelyUsing.contains(playerUUID);
     }
+
+    public abstract EventInfo upgradeEventInfo(IEventInfo base);
 
     public abstract boolean doesStartingBlockQualify(EventInfo info, BlockPos pos, BlockState state);
 

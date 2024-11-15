@@ -6,7 +6,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.ToolAction;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 // Hammer logic that does not depend on a specific EventType.
@@ -18,6 +20,9 @@ public interface IHammerHandler {
         default ItemStack tool() {
             return player().getMainHandItem();
         }
+
+        @Nullable
+        default ToolAction toolAction() { return null; };
 
         default Direction planarDirection() {
             return player().getDirection();
