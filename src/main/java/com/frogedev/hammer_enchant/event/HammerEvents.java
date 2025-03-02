@@ -16,7 +16,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -71,7 +70,7 @@ public class HammerEvents {
 
         HitResult hitResult =  player.pick(player.getBlockReach(), 0.0f, false);
         if(hitResult instanceof BlockHitResult blockHitResult) {
-            Iterator<BlockPos> blockPosIter = MiningHandler.INSTANCE.computeCandidatePositionsForBaseEvent(player, breakPos, blockHitResult.getDirection());
+            Iterator<BlockPos> blockPosIter = MiningHandler.INSTANCE.computeTargetBlocksForBaseEvent(player, breakPos, blockHitResult.getDirection());
 
             if (!blockPosIter.hasNext()) {
                 return;

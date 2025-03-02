@@ -47,7 +47,7 @@ public abstract class BaseHammerHandler {
 
     public abstract ToolRenderEvents.FloatColor getWireframeColor();
 
-    public abstract Iterator<BlockPos> computeCandidatePositionsForBaseEvent(Player player, BlockPos origin, Direction hitDirection);
+    public abstract Iterator<BlockPos> computeTargetBlocksForBaseEvent(Player player, BlockPos origin, Direction hitDirection);
 
     public abstract boolean isToolCorrectType(ItemStack tool);
 

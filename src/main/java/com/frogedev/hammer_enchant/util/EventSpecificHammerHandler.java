@@ -40,7 +40,7 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
 
         // One event may need to be attempted as multiple different events. E.g.: Right-clicking an Axe may invoke AXE_STRIP, AXE_SCRAPE, or AXE_WAX_OFF.
         Iterable<EventInfo> candidateEvents = this.expandBaseEventIntoCandidateEvents(baseEvent.player(), baseEvent.originPos(), baseEvent.hitDirection());
-        computeCandidatePositionsForFirstQualifyingCandidateEvent(candidateEvents.iterator()).forEachRemaining(bp -> {
+        computeTargetBlocksForFirstQualifyingCandidateEvent(candidateEvents.iterator()).forEachRemaining(bp -> {
             targetBlockPositions.add(bp.immutable());
         });
 
@@ -55,13 +55,13 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
         return true;
     }
 
-    public Iterator<BlockPos> computeCandidatePositionsForBaseEvent(Player player, BlockPos origin, Direction hitDirection){
-        return this.computeCandidatePositionsForFirstQualifyingCandidateEvent(this.expandBaseEventIntoCandidateEvents(player, origin, hitDirection).iterator());
+    public Iterator<BlockPos> computeTargetBlocksForBaseEvent(Player player, BlockPos origin, Direction hitDirection){
+        return this.computeTargetBlocksForFirstQualifyingCandidateEvent(this.expandBaseEventIntoCandidateEvents(player, origin, hitDirection).iterator());
     }
 
-    private Iterator<BlockPos> computeCandidatePositionsForFirstQualifyingCandidateEvent(Iterator<EventInfo> events) {
+    private Iterator<BlockPos> computeTargetBlocksForFirstQualifyingCandidateEvent(Iterator<EventInfo> events) {
         while(events.hasNext()){
-            Iterator<BlockPos> results = this.computeCandidatePositionsForSingleEvent(events.next());
+            Iterator<BlockPos> results = this.computeTargetBlocksForSingleEvent(events.next());
             if(results.hasNext()){
                 return results;
             }
@@ -69,7 +69,7 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
         return Collections.emptyIterator();
     }
 
-    private Iterator<BlockPos> computeCandidatePositionsForSingleEvent(EventInfo eventInfo) {
+    private Iterator<BlockPos> computeTargetBlocksForSingleEvent(EventInfo eventInfo) {
         Player player = eventInfo.player();
         ItemStack tool = eventInfo.tool();
         if (!doPlayerAndToolMeetRequirements(player, tool)) {

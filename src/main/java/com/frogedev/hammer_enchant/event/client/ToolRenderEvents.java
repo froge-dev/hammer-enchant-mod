@@ -80,7 +80,7 @@ public class ToolRenderEvents {
 
         // See if any handlers qualify.
         for(BaseHammerHandler handler : HANDLERS){
-            Iterator<BlockPos> blocks = handler.computeCandidatePositionsForBaseEvent(player, origin, blockTrace.getDirection());
+            Iterator<BlockPos> blocks = handler.computeTargetBlocksForBaseEvent(player, origin, blockTrace.getDirection());
             if(blocks.hasNext()){
                 handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
                 break;
