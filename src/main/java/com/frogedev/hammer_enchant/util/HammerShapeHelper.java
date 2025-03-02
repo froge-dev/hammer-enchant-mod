@@ -15,7 +15,7 @@ public class HammerShapeHelper {
 //        }
 
         // Get the world axes that correspond to the mining shape's depth/width/height.
-        Direction depthDir = info.direction().getOpposite();
+        Direction depthDir = info.hitDirection().getOpposite();
         Direction heightDir;
         Direction widthDir;
         if (depthDir.getAxis().isVertical()) {

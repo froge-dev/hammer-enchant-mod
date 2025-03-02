@@ -35,9 +35,11 @@ public class HammerTypes {
 
         @Override
         protected void perform(UseEventInfo useEventInfo, List<BlockPos> blocks) {
-            Level level = useEventInfo.player().level();
-            for(BlockPos pos : blocks){
-                level.getBlockState(pos).getToolModifiedState(useEventInfo.useOnContext(), useEventInfo.toolAction(), false);
+            if(useEventInfo.player() instanceof ServerPlayer serverPlayer) {
+                Level level = useEventInfo.player().level();
+                for (BlockPos pos : blocks) {
+                    level.getBlockState(pos).getToolModifiedState(useEventInfo.useOnContext(), useEventInfo.toolAction(), false);
+                }
             }
         }
 

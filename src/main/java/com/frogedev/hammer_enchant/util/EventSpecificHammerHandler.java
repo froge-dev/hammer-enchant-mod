@@ -54,7 +54,7 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
         }
 
         Level level = eventInfo.player().level();
-        if (!doesStartingBlockQualify(eventInfo, eventInfo.originPos(), level.getBlockState(eventInfo.originPos()))) {
+        if ( !doesStartingBlockQualify(eventInfo, eventInfo.originPos(), level.getBlockState(eventInfo.originPos()))) {
             return Collections.emptyIterator();
         }
 

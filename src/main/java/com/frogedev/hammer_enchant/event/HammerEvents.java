@@ -5,10 +5,13 @@ import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.frogedev.hammer_enchant.util.MiningEventHammerHandler;
 import com.frogedev.hammer_enchant.util.UseEventHammerHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -27,7 +30,7 @@ public class HammerEvents {
             return;
         }
 
-        UseEventHammerHandler.UseEventInfo eventInfo = new UseEventHammerHandler.UseEventInfo(event.getContext(), event.getToolAction());
+        UseEventHammerHandler.UseEventInfo eventInfo = new UseEventHammerHandler.UseEventInfo(event.getContext(), event.getToolAction(), event.getContext().getClickedFace());
         if (HammerTypes.UniversalToolUseHandler.INSTANCE.tryPerform(eventInfo)) {
             event.setCanceled(true);
         }
@@ -40,9 +43,14 @@ public class HammerEvents {
             return;
         }
 
-        MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(event.getPlayer(), event.getPos());
-        if (HammerTypes.UniversalMiningHandler.INSTANCE.tryPerform(eventInfo)) {
-            event.setCanceled(true);
+        HitResult hitResult =  event.getPlayer().pick(event.getPlayer().getBlockReach(), 0.0f, false);
+        if(hitResult instanceof BlockHitResult blockHitResult){
+            Direction hitDirection = blockHitResult.getDirection();
+
+            MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(event.getPlayer(), event.getPos(), hitDirection);
+            if (HammerTypes.UniversalMiningHandler.INSTANCE.tryPerform(eventInfo)) {
+                event.setCanceled(true);
+            }
         }
     }
 
@@ -62,33 +70,36 @@ public class HammerEvents {
         Level level = player.level();
 
 
-        MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(player, breakPos);
-        Iterator<BlockPos> blockPosIter = HammerTypes.UniversalMiningHandler.INSTANCE.computeCandidatePositions(eventInfo);
+        HitResult hitResult =  player.pick(player.getBlockReach(), 0.0f, false);
+        if(hitResult instanceof BlockHitResult blockHitResult) {
+            MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(player, breakPos, blockHitResult.getDirection());
+            Iterator<BlockPos> blockPosIter = HammerTypes.UniversalMiningHandler.INSTANCE.computeCandidatePositions(eventInfo);
 
-        if (!blockPosIter.hasNext()) {
-            return;
-        }
+            if (!blockPosIter.hasNext()) {
+                return;
+            }
 
-        List<Float> allDestroyTimes = new ArrayList<>();
-        while (blockPosIter.hasNext()) {
-            BlockPos blockPos = blockPosIter.next();
-            BlockState blockState = level.getBlockState(blockPos);
-            allDestroyTimes.add(blockState.getBlock().defaultDestroyTime());
-        }
+            List<Float> allDestroyTimes = new ArrayList<>();
+            while (blockPosIter.hasNext()) {
+                BlockPos blockPos = blockPosIter.next();
+                BlockState blockState = level.getBlockState(blockPos);
+                allDestroyTimes.add(blockState.getBlock().defaultDestroyTime());
+            }
 
-        // Mining speed (s) is basically everything *but* block hardness (h).
-        // Let (t) be time to break.
-        //  normally: t=h/s
-        //  we want: t' = f(h1,h2,...)/s
-        //  we can only change (s), so we do: t' = h/s'
-        //      f(h1,h2,...})/s = h/s'
-        //      s' = s*h / f(h1,h2,...)
-        float centerDestroyTime = level.getBlockState(breakPos).getBlock().defaultDestroyTime();
-        float totalDestroyTime = ModConfig.MINING_SPEED_MODE.get().computeDestroyTime(centerDestroyTime, allDestroyTimes);
+            // Mining speed (s) is basically everything *but* block hardness (h).
+            // Let (t) be time to break.
+            //  normally: t=h/s
+            //  we want: t' = f(h1,h2,...)/s
+            //  we can only change (s), so we do: t' = h/s'
+            //      f(h1,h2,...})/s = h/s'
+            //      s' = s*h / f(h1,h2,...)
+            float centerDestroyTime = level.getBlockState(breakPos).getBlock().defaultDestroyTime();
+            float totalDestroyTime = ModConfig.MINING_SPEED_MODE.get().computeDestroyTime(centerDestroyTime, allDestroyTimes);
 
-        if (totalDestroyTime > 0) {
-            float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
-            event.setNewSpeed(newSpeed);
+            if (totalDestroyTime > 0) {
+                float newSpeed = event.getOriginalSpeed() * centerDestroyTime / totalDestroyTime;
+                event.setNewSpeed(newSpeed);
+            }
         }
     }
 }

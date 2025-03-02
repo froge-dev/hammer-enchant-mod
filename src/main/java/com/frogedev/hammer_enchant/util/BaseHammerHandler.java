@@ -36,13 +36,7 @@ public abstract class BaseHammerHandler {
             return player().getDirection();
         }
 
-        default Direction direction() {
-            float xRot = player().getXRot();
-            if(xRot >= -45 && xRot <= 45){
-                return planarDirection();
-            }
-            return xRot > 0 ? Direction.DOWN : Direction.UP;
-        }
+        Direction hitDirection();
 
         // When true, only process blocks of the same type.
         default boolean altMode() {
@@ -50,7 +44,7 @@ public abstract class BaseHammerHandler {
         }
     }
 
-    public record SimpleEventInfo(Player player, BlockPos originPos) implements IEventInfo {}
+    public record SimpleEventInfo(Player player, BlockPos originPos, Direction hitDirection) implements IEventInfo {}
 
     public abstract ToolRenderEvents.FloatColor getWireframeColor();
 

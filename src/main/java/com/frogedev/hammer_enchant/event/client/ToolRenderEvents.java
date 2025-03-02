@@ -85,7 +85,7 @@ public class ToolRenderEvents {
 
         // See if any tool-use handlers qualify.
         for(UseEventHammerHandler handler : USE_HANDLERS){
-            Iterator<BlockPos> blocks = handler.computeCandidatePositions(handler.upgradeEventInfo(new BaseHammerHandler.SimpleEventInfo(player, origin)));
+            Iterator<BlockPos> blocks = handler.computeCandidatePositions(handler.upgradeEventInfo(new BaseHammerHandler.SimpleEventInfo(player, origin, blockTrace.getDirection())));
             if(blocks.hasNext()){
                 handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
             }
@@ -94,7 +94,7 @@ public class ToolRenderEvents {
         // See if any mining handlers qualify.
         if(handlerResult == null){
             for(MiningEventHammerHandler handler : MINING_HANDLERS){
-                Iterator<BlockPos> blocks = handler.computeCandidatePositions(handler.upgradeEventInfo(new BaseHammerHandler.SimpleEventInfo(player, origin)));
+                Iterator<BlockPos> blocks = handler.computeCandidatePositions(handler.upgradeEventInfo(new BaseHammerHandler.SimpleEventInfo(player, origin, blockTrace.getDirection())));
                 if(blocks.hasNext()){
                     handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
                 }
