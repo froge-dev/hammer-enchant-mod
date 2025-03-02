@@ -3,8 +3,10 @@ package com.frogedev.hammer_enchant.util;
 import com.frogedev.hammer_enchant.ModConfig;
 import com.frogedev.hammer_enchant.event.client.ToolRenderEvents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -12,9 +14,18 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.tags.ITagManager;
 
+import java.util.Collections;
 import java.util.List;
 
-public static class MiningHandler extends MiningEventHammerHandler {
+public class MiningHandler extends EventSpecificHammerHandler<MiningHandler.MiningEventInfo> {
+    public record MiningEventInfo(Player player, BlockPos originPos, Direction hitDirection) implements BaseHammerHandler.IEventInfo {
+    }
+
+    @Override
+    public final Iterable<MiningEventInfo> expandBaseEventIntoCandidateEvents(Player player, BlockPos originPos, Direction hitDirection) {
+        return Collections.singleton(new MiningEventInfo(player, originPos, hitDirection));
+    }
+
     public static final MiningHandler INSTANCE = new MiningHandler();
 
     private static boolean isBestToolForMiningBlock(Item toolItem, BlockState blockState){

@@ -10,6 +10,7 @@ import net.minecraftforge.common.ToolAction;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,6 +46,8 @@ public abstract class BaseHammerHandler {
     }
 
     public abstract ToolRenderEvents.FloatColor getWireframeColor();
+
+    public abstract Iterator<BlockPos> computeCandidatePositionsForBaseEvent(Player player, BlockPos origin, Direction hitDirection);
 
     public abstract boolean isToolCorrectType(ItemStack tool);
 

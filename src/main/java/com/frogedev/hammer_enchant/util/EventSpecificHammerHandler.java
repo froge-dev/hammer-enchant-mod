@@ -40,7 +40,7 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
 
         // One event may need to be attempted as multiple different events. E.g.: Right-clicking an Axe may invoke AXE_STRIP, AXE_SCRAPE, or AXE_WAX_OFF.
         Iterable<EventInfo> candidateEvents = this.expandBaseEventIntoCandidateEvents(baseEvent.player(), baseEvent.originPos(), baseEvent.hitDirection());
-        computeCandidatePositionsForFirstQualifyingEvent(candidateEvents.iterator()).forEachRemaining(bp -> {
+        computeCandidatePositionsForFirstQualifyingCandidateEvent(candidateEvents.iterator()).forEachRemaining(bp -> {
             targetBlockPositions.add(bp.immutable());
         });
 
@@ -55,7 +55,11 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
         return true;
     }
 
-    public final Iterator<BlockPos> computeCandidatePositionsForFirstQualifyingEvent(Iterator<EventInfo> events) {
+    public Iterator<BlockPos> computeCandidatePositionsForBaseEvent(Player player, BlockPos origin, Direction hitDirection){
+        return this.computeCandidatePositionsForFirstQualifyingCandidateEvent(this.expandBaseEventIntoCandidateEvents(player, origin, hitDirection).iterator());
+    }
+
+    private Iterator<BlockPos> computeCandidatePositionsForFirstQualifyingCandidateEvent(Iterator<EventInfo> events) {
         while(events.hasNext()){
             Iterator<BlockPos> results = this.computeCandidatePositionsForSingleEvent(events.next());
             if(results.hasNext()){

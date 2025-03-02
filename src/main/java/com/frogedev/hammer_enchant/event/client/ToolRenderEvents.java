@@ -41,6 +41,8 @@ public class ToolRenderEvents {
 
     private static Field field_LevelRenderer_DestroyingBlocks;
 
+    private static final BaseHammerHandler[] HANDLERS = {ToolUseHandler.INSTANCE, MiningHandler.INSTANCE};
+
     static {
         field_LevelRenderer_DestroyingBlocks = ObfuscationReflectionHelper.findField(LevelRenderer.class, "destroyingBlocks");
         field_LevelRenderer_DestroyingBlocks.setAccessible(true);
@@ -55,13 +57,6 @@ public class ToolRenderEvents {
 
         return null;
     }
-
-    private static final UseEventHammerHandler[] USE_HANDLERS = {
-            ToolUseHandler.INSTANCE,
-    };
-    private static final MiningEventHammerHandler[] MINING_HANDLERS = {
-            MiningHandler.INSTANCE,
-    };
 
     /**
      * Renders the outline on the extra blocks
@@ -83,23 +78,14 @@ public class ToolRenderEvents {
         record HandlerResult(Iterator<BlockPos> blocks, FloatColor wireframeColor){}
         HandlerResult handlerResult = null;
 
-        // See if any tool-use handlers qualify.
-        for(UseEventHammerHandler handler : USE_HANDLERS){
-            Iterator<BlockPos> blocks = handler.computeCandidatePositionsForFirstQualifyingEvent(handler.expandBaseEventIntoCandidateEvents(player, origin, blockTrace.getDirection()).iterator());
+        // See if any handlers qualify.
+        for(BaseHammerHandler handler : HANDLERS){
+            Iterator<BlockPos> blocks = handler.computeCandidatePositionsForBaseEvent(player, origin, blockTrace.getDirection());
             if(blocks.hasNext()){
                 handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
+                break;
             }
         }
-
-//        // See if any mining handlers qualify.
-//        if(handlerResult == null){
-//            for(MiningEventHammerHandler handler : MINING_HANDLERS){
-//                Iterator<BlockPos> blocks = handler.computeCandidatePositionsForFirstQualifyingEvent(handler.expandBaseEventIntoCandidateEvents(player, origin, blockTrace.getDirection()).iterator());
-//                if(blocks.hasNext()){
-//                    handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
-//                }
-//            }
-//        }
 
         // If no handlers qualify, don't render anything.
         if (handlerResult == null) {
