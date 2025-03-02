@@ -83,18 +83,18 @@ public class ToolRenderEvents {
         record HandlerResult(Iterator<BlockPos> blocks, FloatColor wireframeColor){}
         HandlerResult handlerResult = null;
 
-        // See if any tool-use handlers qualify.
-        for(UseEventHammerHandler handler : USE_HANDLERS){
-            Iterator<BlockPos> blocks = handler.computeCandidatePositions(handler.upgradeEventInfo(new BaseHammerHandler.SimpleEventInfo(player, origin, blockTrace.getDirection())));
-            if(blocks.hasNext()){
-                handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
-            }
-        }
+//        // See if any tool-use handlers qualify.
+//        for(UseEventHammerHandler handler : USE_HANDLERS){
+//            Iterator<BlockPos> blocks = handler.computeCandidatePositionsForFirstQualifyingEvent(handler.expandBaseEventIntoCandidateEvents(player, origin, blockTrace.getDirection()).iterator());
+//            if(blocks.hasNext()){
+//                handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
+//            }
+//        }
 
         // See if any mining handlers qualify.
         if(handlerResult == null){
             for(MiningEventHammerHandler handler : MINING_HANDLERS){
-                Iterator<BlockPos> blocks = handler.computeCandidatePositions(handler.upgradeEventInfo(new BaseHammerHandler.SimpleEventInfo(player, origin, blockTrace.getDirection())));
+                Iterator<BlockPos> blocks = handler.computeCandidatePositionsForFirstQualifyingEvent(handler.expandBaseEventIntoCandidateEvents(player, origin, blockTrace.getDirection()).iterator());
                 if(blocks.hasNext()){
                     handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
                 }

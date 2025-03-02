@@ -39,12 +39,10 @@ public abstract class BaseHammerHandler {
         Direction hitDirection();
 
         // When true, only process blocks of the same type.
-        default boolean altMode() {
+        default boolean shouldUseAltAction() {
             return player().isCrouching();
         }
     }
-
-    public record SimpleEventInfo(Player player, BlockPos originPos, Direction hitDirection) implements IEventInfo {}
 
     public abstract ToolRenderEvents.FloatColor getWireframeColor();
 

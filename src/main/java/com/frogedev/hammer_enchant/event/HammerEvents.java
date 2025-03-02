@@ -18,6 +18,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -30,10 +31,10 @@ public class HammerEvents {
             return;
         }
 
-        UseEventHammerHandler.UseEventInfo eventInfo = new UseEventHammerHandler.UseEventInfo(event.getContext(), event.getToolAction(), event.getContext().getClickedFace());
-        if (HammerTypes.UniversalToolUseHandler.INSTANCE.tryPerform(eventInfo)) {
-            event.setCanceled(true);
-        }
+//        UseEventHammerHandler.UseEventInfo eventInfo = new UseEventHammerHandler.UseEventInfo(event.getContext(), event.getToolAction(), event.getContext().getClickedFace());
+//        if (HammerTypes.UniversalToolUseHandler.INSTANCE.tryPerform(eventInfo)) {
+//            event.setCanceled(true);
+//        }
     }
 
     // On conclusion of block broken.
@@ -73,7 +74,7 @@ public class HammerEvents {
         HitResult hitResult =  player.pick(player.getBlockReach(), 0.0f, false);
         if(hitResult instanceof BlockHitResult blockHitResult) {
             MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(player, breakPos, blockHitResult.getDirection());
-            Iterator<BlockPos> blockPosIter = HammerTypes.UniversalMiningHandler.INSTANCE.computeCandidatePositions(eventInfo);
+            Iterator<BlockPos> blockPosIter = HammerTypes.UniversalMiningHandler.INSTANCE.computeCandidatePositionsForFirstQualifyingEvent(Collections.singleton(eventInfo).iterator());
 
             if (!blockPosIter.hasNext()) {
                 return;
