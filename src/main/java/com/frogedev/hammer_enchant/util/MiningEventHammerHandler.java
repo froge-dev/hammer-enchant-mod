@@ -15,3 +15,4 @@ abstract public class MiningEventHammerHandler extends EventSpecificHammerHandle
         return Collections.singleton(new MiningEventInfo(player, originPos, hitDirection));
     }
 }
+

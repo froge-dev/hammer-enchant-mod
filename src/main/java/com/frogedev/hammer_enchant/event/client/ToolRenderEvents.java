@@ -57,10 +57,10 @@ public class ToolRenderEvents {
     }
 
     private static final UseEventHammerHandler[] USE_HANDLERS = {
-            HammerTypes.UniversalToolUseHandler.INSTANCE,
+            ToolUseHandler.INSTANCE,
     };
     private static final MiningEventHammerHandler[] MINING_HANDLERS = {
-            HammerTypes.UniversalMiningHandler.INSTANCE,
+            MiningHandler.INSTANCE,
     };
 
     /**
@@ -83,23 +83,23 @@ public class ToolRenderEvents {
         record HandlerResult(Iterator<BlockPos> blocks, FloatColor wireframeColor){}
         HandlerResult handlerResult = null;
 
-//        // See if any tool-use handlers qualify.
-//        for(UseEventHammerHandler handler : USE_HANDLERS){
-//            Iterator<BlockPos> blocks = handler.computeCandidatePositionsForFirstQualifyingEvent(handler.expandBaseEventIntoCandidateEvents(player, origin, blockTrace.getDirection()).iterator());
-//            if(blocks.hasNext()){
-//                handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
-//            }
-//        }
-
-        // See if any mining handlers qualify.
-        if(handlerResult == null){
-            for(MiningEventHammerHandler handler : MINING_HANDLERS){
-                Iterator<BlockPos> blocks = handler.computeCandidatePositionsForFirstQualifyingEvent(handler.expandBaseEventIntoCandidateEvents(player, origin, blockTrace.getDirection()).iterator());
-                if(blocks.hasNext()){
-                    handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
-                }
+        // See if any tool-use handlers qualify.
+        for(UseEventHammerHandler handler : USE_HANDLERS){
+            Iterator<BlockPos> blocks = handler.computeCandidatePositionsForFirstQualifyingEvent(handler.expandBaseEventIntoCandidateEvents(player, origin, blockTrace.getDirection()).iterator());
+            if(blocks.hasNext()){
+                handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
             }
         }
+
+//        // See if any mining handlers qualify.
+//        if(handlerResult == null){
+//            for(MiningEventHammerHandler handler : MINING_HANDLERS){
+//                Iterator<BlockPos> blocks = handler.computeCandidatePositionsForFirstQualifyingEvent(handler.expandBaseEventIntoCandidateEvents(player, origin, blockTrace.getDirection()).iterator());
+//                if(blocks.hasNext()){
+//                    handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
+//                }
+//            }
+//        }
 
         // If no handlers qualify, don't render anything.
         if (handlerResult == null) {

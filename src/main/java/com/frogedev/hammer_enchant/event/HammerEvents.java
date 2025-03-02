@@ -1,8 +1,8 @@
 package com.frogedev.hammer_enchant.event;
 
 import com.frogedev.hammer_enchant.ModConfig;
-import com.frogedev.hammer_enchant.util.HammerTypes;
 import com.frogedev.hammer_enchant.util.MiningEventHammerHandler;
+import com.frogedev.hammer_enchant.util.MiningHandler;
 import com.frogedev.hammer_enchant.util.UseEventHammerHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,7 +49,7 @@ public class HammerEvents {
             Direction hitDirection = blockHitResult.getDirection();
 
             MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(event.getPlayer(), event.getPos(), hitDirection);
-            if (HammerTypes.UniversalMiningHandler.INSTANCE.tryPerform(eventInfo)) {
+            if (MiningHandler.INSTANCE.tryPerform(eventInfo)) {
                 event.setCanceled(true);
             }
         }
@@ -74,7 +74,7 @@ public class HammerEvents {
         HitResult hitResult =  player.pick(player.getBlockReach(), 0.0f, false);
         if(hitResult instanceof BlockHitResult blockHitResult) {
             MiningEventHammerHandler.MiningEventInfo eventInfo = new MiningEventHammerHandler.MiningEventInfo(player, breakPos, blockHitResult.getDirection());
-            Iterator<BlockPos> blockPosIter = HammerTypes.UniversalMiningHandler.INSTANCE.computeCandidatePositionsForFirstQualifyingEvent(Collections.singleton(eventInfo).iterator());
+            Iterator<BlockPos> blockPosIter = MiningHandler.INSTANCE.computeCandidatePositionsForFirstQualifyingEvent(Collections.singleton(eventInfo).iterator());
 
             if (!blockPosIter.hasNext()) {
                 return;
