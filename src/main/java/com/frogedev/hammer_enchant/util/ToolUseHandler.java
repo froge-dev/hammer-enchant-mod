@@ -61,7 +61,7 @@ public class ToolUseHandler extends EventSpecificHammerHandler<ToolUseHandler.Us
 
     @Override
     protected boolean shouldSkipBlockUniversal(UseEventInfo eventInfo, BlockPos pos, BlockState blockState) {
-        if(!super.shouldSkipBlockUniversal(eventInfo, pos, blockState)){
+        if(super.shouldSkipBlockUniversal(eventInfo, pos, blockState)){
             return true;
         }
 
@@ -90,7 +90,7 @@ public class ToolUseHandler extends EventSpecificHammerHandler<ToolUseHandler.Us
         }
     }
 
-    private static final ToolRenderEvents.FloatColor WIREFRAME_COLOR = new ToolRenderEvents.FloatColor(0.8f, 1.0f, 0.0f);
+    private static final ToolRenderEvents.FloatColor WIREFRAME_COLOR = new ToolRenderEvents.FloatColor(0.4f, 0.7f, 1.0f);
     @Override
     public ToolRenderEvents.FloatColor getWireframeColor() {
         return WIREFRAME_COLOR;
