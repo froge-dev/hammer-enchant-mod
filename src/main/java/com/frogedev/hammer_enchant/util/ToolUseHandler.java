@@ -66,7 +66,6 @@ public class ToolUseHandler extends EventSpecificHammerHandler<ToolUseHandler.Us
         }
 
         BlockState newState = blockState.getToolModifiedState(eventInfo.useOnContext(), eventInfo.toolAction(), true);
-        eventInfo.player().sendSystemMessage(Component.literal(newState == null ? "none" : newState.toString()));
         return newState == null;
     }
 

@@ -2,6 +2,7 @@ package com.frogedev.hammer_enchant.event;
 
 import com.frogedev.hammer_enchant.ModConfig;
 import com.frogedev.hammer_enchant.util.MiningHandler;
+import com.frogedev.hammer_enchant.util.ToolUseHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,10 +29,9 @@ public class HammerEvents {
             return;
         }
 
-//        UseEventHammerHandler.UseEventInfo eventInfo = new UseEventHammerHandler.UseEventInfo(event.getContext(), event.getToolAction(), event.getContext().getClickedFace());
-//        if (HammerTypes.UniversalToolUseHandler.INSTANCE.tryPerform(eventInfo)) {
-//            event.setCanceled(true);
-//        }
+        if (ToolUseHandler.INSTANCE.tryPerform(event.getContext().getPlayer(), event.getPos(), event.getContext().getClickedFace())) {
+            event.setCanceled(true);
+        }
     }
 
     // On conclusion of block broken.
@@ -45,8 +45,7 @@ public class HammerEvents {
         if(hitResult instanceof BlockHitResult blockHitResult){
             Direction hitDirection = blockHitResult.getDirection();
 
-            MiningHandler.MiningEventInfo eventInfo = new MiningHandler.MiningEventInfo(event.getPlayer(), event.getPos(), hitDirection);
-            if (MiningHandler.INSTANCE.tryPerform(eventInfo)) {
+            if (MiningHandler.INSTANCE.tryPerform(event.getPlayer(), event.getPos(), hitDirection)) {
                 event.setCanceled(true);
             }
         }

@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fluids.IFluidBlock;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 import static com.frogedev.hammer_enchant.util.HammerShapeHelper.getAllBlockPositions;
@@ -34,13 +35,18 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
     protected abstract void perform(EventInfo baseEvent, List<BlockPos> blocks);
 
     public final boolean tryPerform(
-            EventInfo baseEvent
+        Player player,
+        BlockPos originPos,
+        Direction hitDirection
     ) {
         List<BlockPos> targetBlockPositions = new ArrayList<>();
 
         // One event may need to be attempted as multiple different events. E.g.: Right-clicking an Axe may invoke AXE_STRIP, AXE_SCRAPE, or AXE_WAX_OFF.
-        Iterable<EventInfo> candidateEvents = this.expandBaseEventIntoCandidateEvents(baseEvent.player(), baseEvent.originPos(), baseEvent.hitDirection());
-        computeTargetBlocksForFirstQualifyingCandidateEvent(candidateEvents.iterator()).forEachRemaining(bp -> {
+        Iterable<EventInfo> candidateEvents = this.expandBaseEventIntoCandidateEvents(player, originPos, hitDirection);
+
+        Pair<EventInfo, Iterator<BlockPos>> qualifyingPair = getFirstQualifyingEventAndBlocks(candidateEvents.iterator());
+
+        qualifyingPair.u.forEachRemaining(bp -> {
             targetBlockPositions.add(bp.immutable());
         });
 
@@ -48,25 +54,26 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
             return false;
         }
 
-        UUID playerUUID = baseEvent.player().getUUID();
+        UUID playerUUID = player.getUUID();
         playersActivelyUsing.add(playerUUID);
-        perform(baseEvent, targetBlockPositions);
+        perform(qualifyingPair.t, targetBlockPositions);
         playersActivelyUsing.remove(playerUUID);
         return true;
     }
 
     public Iterator<BlockPos> computeTargetBlocksForBaseEvent(Player player, BlockPos origin, Direction hitDirection){
-        return this.computeTargetBlocksForFirstQualifyingCandidateEvent(this.expandBaseEventIntoCandidateEvents(player, origin, hitDirection).iterator());
+        return this.getFirstQualifyingEventAndBlocks(this.expandBaseEventIntoCandidateEvents(player, origin, hitDirection).iterator()).u;
     }
 
-    private Iterator<BlockPos> computeTargetBlocksForFirstQualifyingCandidateEvent(Iterator<EventInfo> events) {
+    private Pair<EventInfo, Iterator<BlockPos>> getFirstQualifyingEventAndBlocks(Iterator<EventInfo> events) {
         while(events.hasNext()){
-            Iterator<BlockPos> results = this.computeTargetBlocksForSingleEvent(events.next());
-            if(results.hasNext()){
-                return results;
+            EventInfo event = events.next();
+            Iterator<BlockPos> blocks = this.computeTargetBlocksForSingleEvent(event);
+            if(blocks.hasNext()){
+                return new Pair<>(event, blocks);
             }
         }
-        return Collections.emptyIterator();
+        return new Pair<>(null, Collections.emptyIterator());
     }
 
     private Iterator<BlockPos> computeTargetBlocksForSingleEvent(EventInfo eventInfo) {

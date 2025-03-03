@@ -10,10 +10,6 @@ import java.util.*;
 
 public class HammerShapeHelper {
     public static Iterator<BlockPos> getAllBlockPositions(BaseHammerHandler.IEventInfo info) {
-//        if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK) {
-//            return Collections.emptyIterator();
-//        }
-
         // Get the world axes that correspond to the mining shape's depth/width/height.
         Direction depthDir = info.hitDirection().getOpposite();
         Direction heightDir;
