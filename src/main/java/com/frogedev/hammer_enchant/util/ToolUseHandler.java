@@ -80,13 +80,17 @@ public class ToolUseHandler extends EventSpecificHammerHandler<ToolUseHandler.Us
     }
 
     @Override
-    protected void perform(UseEventInfo baseEvent, List<BlockPos> blocks) {
-        if(baseEvent.player() instanceof ServerPlayer serverPlayer) {
-            Level level = baseEvent.player().level();
+    protected void perform(UseEventInfo event, List<BlockPos> blocks) {
+//        if(event.player() instanceof ServerPlayer) {
+            Level level = event.player().level();
             for (BlockPos pos : blocks) {
-                level.getBlockState(pos).getToolModifiedState(baseEvent.useOnContext(), baseEvent.toolAction(), false);
+                BlockState modifiedState = level.getBlockState(pos).getToolModifiedState(event.useOnContext(), event.toolAction(), false);
+                if(modifiedState != null){
+                    event.player().sendSystemMessage(Component.literal(level.setBlockAndUpdate(pos, modifiedState) ? "true" : "false"));
+                }
             }
-        }
+            event.player().sendSystemMessage(Component.literal("Modifying " + blocks.size() + " blocks"));
+//        }
     }
 
     private static final ToolRenderEvents.FloatColor WIREFRAME_COLOR = new ToolRenderEvents.FloatColor(0.4f, 0.7f, 1.0f);

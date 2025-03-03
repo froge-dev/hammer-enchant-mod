@@ -58,16 +58,11 @@ public abstract class BaseHammerHandler {
     }
 
     // Perform various checks to see if the hammer should be used.
-    protected final boolean doPlayerAndToolMeetRequirements(
+    protected final boolean doPlayerAndToolMeetsRequirements(
             Player player,
             ItemStack tool
     ) {
         if(player == null){
-            return false;
-        }
-
-        UUID playerUUID = player.getUUID();
-        if (isPlayerActivelyUsing(playerUUID)) {
             return false;
         }
 

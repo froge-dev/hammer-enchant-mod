@@ -125,10 +125,10 @@ public class MiningHandler extends EventSpecificHammerHandler<MiningHandler.Mini
     }
 
     @Override
-    protected void perform(MiningEventInfo baseEvent, List<BlockPos> blocks) {
-        ItemStack tool = baseEvent.tool();
+    protected void perform(MiningEventInfo event, List<BlockPos> blocks) {
+        ItemStack tool = event.tool();
 
-        if(baseEvent.player() instanceof ServerPlayer serverPlayer){
+        if(event.player() instanceof ServerPlayer serverPlayer){
             // The damage calculation might decrease how much damage the tool takes.
             // As a precaution, temporarily set the tool to undamaged such that it doesn't break prematurely.
             int initialDamage = tool.getDamageValue();

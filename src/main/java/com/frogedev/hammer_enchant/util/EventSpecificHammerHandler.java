@@ -9,7 +9,6 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fluids.IFluidBlock;
 
-import javax.annotation.Nullable;
 import java.util.*;
 
 import static com.frogedev.hammer_enchant.util.HammerShapeHelper.getAllBlockPositions;
@@ -32,13 +31,19 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
 
     protected abstract boolean doesNeighborBlockQualify(EventInfo info, BlockPos originPos, BlockState originState, BlockPos neighborPos, BlockState neighborState);
 
-    protected abstract void perform(EventInfo baseEvent, List<BlockPos> blocks);
+    protected abstract void perform(EventInfo event, List<BlockPos> blocks);
 
     public final boolean tryPerform(
         Player player,
         BlockPos originPos,
         Direction hitDirection
     ) {
+        UUID playerUUID = player.getUUID();
+        if (isPlayerActivelyUsing(playerUUID)) {
+            return false;
+        }
+        playersActivelyUsing.add(playerUUID);
+
         List<BlockPos> targetBlockPositions = new ArrayList<>();
 
         // One event may need to be attempted as multiple different events. E.g.: Right-clicking an Axe may invoke AXE_STRIP, AXE_SCRAPE, or AXE_WAX_OFF.
@@ -51,11 +56,10 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
         });
 
         if(targetBlockPositions.isEmpty()){
+            playersActivelyUsing.remove(playerUUID);
             return false;
         }
 
-        UUID playerUUID = player.getUUID();
-        playersActivelyUsing.add(playerUUID);
         perform(qualifyingPair.t, targetBlockPositions);
         playersActivelyUsing.remove(playerUUID);
         return true;
@@ -79,7 +83,7 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
     private Iterator<BlockPos> computeTargetBlocksForSingleEvent(EventInfo eventInfo) {
         Player player = eventInfo.player();
         ItemStack tool = eventInfo.tool();
-        if (!doPlayerAndToolMeetRequirements(player, tool)) {
+        if (!doPlayerAndToolMeetsRequirements(player, tool)) {
             return Collections.emptyIterator();
         }
 
