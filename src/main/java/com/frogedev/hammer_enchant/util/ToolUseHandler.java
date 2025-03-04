@@ -1,5 +1,6 @@
 package com.frogedev.hammer_enchant.util;
 
+import com.frogedev.hammer_enchant.ModConfig;
 import com.frogedev.hammer_enchant.event.client.ToolRenderEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -87,6 +88,17 @@ public class ToolUseHandler extends EventSpecificHammerHandler<ToolUseHandler.Us
             if(modifiedState != null){
                 level.setBlockAndUpdate(pos, modifiedState);
             }
+        }
+
+        ItemStack tool = event.tool();
+        int damagePenalty = ModConfig.DURABILITY_MODE.get().computeDamage(blocks.size());
+        int newDamage = tool.getDamageValue() + damagePenalty;
+        tool.setDamageValue(newDamage);
+
+        // Make sure tool breaks if it's supposed to.
+        if (newDamage >= tool.getMaxDamage()) {
+            tool.hurtAndBreak(0, event.player(), (a) -> {
+            });
         }
     }
     private static final ToolRenderEvents.FloatColor WIREFRAME_COLOR_FALLBACK = new ToolRenderEvents.FloatColor(1.0f, 1.0f, 0.0f);
