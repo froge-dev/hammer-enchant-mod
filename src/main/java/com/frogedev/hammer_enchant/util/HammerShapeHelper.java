@@ -41,8 +41,8 @@ public class HammerShapeHelper {
     }
 
     public static Vec3i getMiningSize(ItemStack itemStack) {
-        int surfaceEnchantLevel = itemStack.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_SURFACE_ENCHANTMENT.get());
-        int depthEnchantLevel = itemStack.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_DEPTH_ENCHANTMENT.get());
+        int surfaceEnchantLevel = itemStack.getEnchantmentLevel(ModEnchantments.WIDE_SHAPE_ENCHANTMENT.get());
+        int depthEnchantLevel = itemStack.getEnchantmentLevel(ModEnchantments.DEEP_SHAPE_ENCHANTMENT.get());
 
         int width = 0;
         int height = 0;

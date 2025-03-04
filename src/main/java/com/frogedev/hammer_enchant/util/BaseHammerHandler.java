@@ -52,8 +52,8 @@ public abstract class BaseHammerHandler {
     public abstract boolean isToolCorrectType(ItemStack tool);
 
     private static boolean hasHammerModifiers(ItemStack tool) {
-        int surfaceEnchantLevel = tool.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_SURFACE_ENCHANTMENT.get());
-        int depthEnchantLevel = tool.getEnchantmentLevel(ModEnchantments.MINING_SHAPE_DEPTH_ENCHANTMENT.get());
+        int surfaceEnchantLevel = tool.getEnchantmentLevel(ModEnchantments.WIDE_SHAPE_ENCHANTMENT.get());
+        int depthEnchantLevel = tool.getEnchantmentLevel(ModEnchantments.DEEP_SHAPE_ENCHANTMENT.get());
         return surfaceEnchantLevel > 0 || depthEnchantLevel > 0;
     }
 
