@@ -63,12 +63,8 @@ public class HammerEvents {
             return;
         }
 
-        Player player = event.getEntity();
-        if (!(player instanceof ServerPlayer)) {
-            return;
-        }
-
         BlockPos breakPos = event.getPosition().get();
+        Player player = event.getEntity();
         Level level = player.level();
 
 
