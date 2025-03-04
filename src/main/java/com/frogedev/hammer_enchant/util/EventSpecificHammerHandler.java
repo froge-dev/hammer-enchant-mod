@@ -1,5 +1,6 @@
 package com.frogedev.hammer_enchant.util;
 
+import com.frogedev.hammer_enchant.event.client.ToolRenderEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
@@ -49,9 +50,13 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
         // One event may need to be attempted as multiple different events. E.g.: Right-clicking an Axe may invoke AXE_STRIP, AXE_SCRAPE, or AXE_WAX_OFF.
         Iterable<EventInfo> candidateEvents = this.expandBaseEventIntoCandidateEvents(player, originPos, hitDirection);
 
-        Pair<EventInfo, Iterator<BlockPos>> qualifyingPair = getFirstQualifyingEventAndBlocks(candidateEvents.iterator());
+        Pair<EventInfo, HammerTarget> qualifyingPair = getFirstQualifyingEventAndTarget(candidateEvents.iterator());
+        if(qualifyingPair == null){
+            playersActivelyUsing.remove(playerUUID);
+            return false;
+        }
 
-        qualifyingPair.u.forEachRemaining(bp -> {
+        qualifyingPair.u.blocksIterator().forEachRemaining(bp -> {
             targetBlockPositions.add(bp.immutable());
         });
 
@@ -65,19 +70,25 @@ public abstract class EventSpecificHammerHandler<EventInfo extends BaseHammerHan
         return true;
     }
 
-    public Iterator<BlockPos> computeTargetBlocksForBaseEvent(Player player, BlockPos origin, Direction hitDirection){
-        return this.getFirstQualifyingEventAndBlocks(this.expandBaseEventIntoCandidateEvents(player, origin, hitDirection).iterator()).u;
+    public HammerTarget computeTargetForBaseEvent(Player player, BlockPos origin, Direction hitDirection){
+        Pair<EventInfo, HammerTarget> pair = getFirstQualifyingEventAndTarget(this.expandBaseEventIntoCandidateEvents(player, origin, hitDirection).iterator());
+        if(pair == null){
+            return null;
+        }
+        return pair.u;
     }
 
-    private Pair<EventInfo, Iterator<BlockPos>> getFirstQualifyingEventAndBlocks(Iterator<EventInfo> events) {
+    abstract protected ToolRenderEvents.FloatColor getWireframeColorForEvent(EventInfo event);
+
+    private Pair<EventInfo, HammerTarget> getFirstQualifyingEventAndTarget(Iterator<EventInfo> events) {
         while(events.hasNext()){
             EventInfo event = events.next();
             Iterator<BlockPos> blocks = this.computeTargetBlocksForSingleEvent(event);
             if(blocks.hasNext()){
-                return new Pair<>(event, blocks);
+                return new Pair<>(event, new HammerTarget(blocks, getWireframeColorForEvent(event)));
             }
         }
-        return new Pair<>(null, Collections.emptyIterator());
+        return null;
     }
 
     private Iterator<BlockPos> computeTargetBlocksForSingleEvent(EventInfo eventInfo) {

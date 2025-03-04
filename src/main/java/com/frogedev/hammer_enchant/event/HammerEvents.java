@@ -1,13 +1,12 @@
 package com.frogedev.hammer_enchant.event;
 
 import com.frogedev.hammer_enchant.ModConfig;
+import com.frogedev.hammer_enchant.util.BaseHammerHandler;
 import com.frogedev.hammer_enchant.util.MiningHandler;
 import com.frogedev.hammer_enchant.util.ToolUseHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -70,15 +69,15 @@ public class HammerEvents {
 
         HitResult hitResult =  player.pick(player.getBlockReach(), 0.0f, false);
         if(hitResult instanceof BlockHitResult blockHitResult) {
-            Iterator<BlockPos> blockPosIter = MiningHandler.INSTANCE.computeTargetBlocksForBaseEvent(player, breakPos, blockHitResult.getDirection());
+            BaseHammerHandler.HammerTarget target = MiningHandler.INSTANCE.computeTargetForBaseEvent(player, breakPos, blockHitResult.getDirection());
 
-            if (!blockPosIter.hasNext()) {
+            if (target == null) {
                 return;
             }
 
             List<Float> allDestroyTimes = new ArrayList<>();
-            while (blockPosIter.hasNext()) {
-                BlockPos blockPos = blockPosIter.next();
+            while (target.blocksIterator().hasNext()) {
+                BlockPos blockPos = target.blocksIterator().next();
                 BlockState blockState = level.getBlockState(blockPos);
                 allDestroyTimes.add(blockState.getBlock().defaultDestroyTime());
             }

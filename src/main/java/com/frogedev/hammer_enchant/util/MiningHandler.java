@@ -96,7 +96,7 @@ public class MiningHandler extends EventSpecificHammerHandler<MiningHandler.Mini
             if(!isBestToolForMiningBlock(toolItem,blockState)){
                 return true;
             }
-            // Skip instamineable blocks (eg torches).
+            // Skip instamineable blocksIterator (eg torches).
             if(blockState.getDestroySpeed(level, pos) <= ModConfig.INSTAMINE_THRESHOLD.get()){
                 return true;
             }
@@ -116,10 +116,10 @@ public class MiningHandler extends EventSpecificHammerHandler<MiningHandler.Mini
         float originDestroySpeed = originState.getDestroySpeed(level, originPos);
         float neighborDestroySpeed = neighborState.getDestroySpeed(level, neighborPos);
         if (originDestroySpeed <= ModConfig.INSTAMINE_THRESHOLD.get()) {
-            // If origin is instamined, only mine other instamineable blocks.
+            // If origin is instamined, only mine other instamineable blocksIterator.
             return neighborDestroySpeed <= ModConfig.INSTAMINE_THRESHOLD.get();
         } else {
-            // If origin is not instamined, only mine blocks with destroy speed within cheat limit.
+            // If origin is not instamined, only mine blocksIterator with destroy speed within cheat limit.
             return neighborDestroySpeed <= originDestroySpeed + ModConfig.MINING_SPEED_CHEAT_CAP.get();
         }
     }
@@ -155,7 +155,7 @@ public class MiningHandler extends EventSpecificHammerHandler<MiningHandler.Mini
 
     private static final ToolRenderEvents.FloatColor WIREFRAME_COLOR = new ToolRenderEvents.FloatColor(1.0f, 0.4f, 0.4f);
     @Override
-    public ToolRenderEvents.FloatColor getWireframeColor() {
+    protected ToolRenderEvents.FloatColor getWireframeColorForEvent(MiningEventInfo event) {
         return WIREFRAME_COLOR;
     }
 }

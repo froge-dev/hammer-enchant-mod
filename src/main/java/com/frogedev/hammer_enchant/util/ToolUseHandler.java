@@ -3,8 +3,6 @@ package com.frogedev.hammer_enchant.util;
 import com.frogedev.hammer_enchant.event.client.ToolRenderEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
@@ -16,7 +14,9 @@ import net.minecraftforge.common.ToolAction;
 import net.minecraftforge.common.ToolActions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ToolUseHandler extends EventSpecificHammerHandler<ToolUseHandler.UseEventInfo> {
     public static final ToolUseHandler INSTANCE = new ToolUseHandler();
@@ -81,22 +81,25 @@ public class ToolUseHandler extends EventSpecificHammerHandler<ToolUseHandler.Us
 
     @Override
     protected void perform(UseEventInfo event, List<BlockPos> blocks) {
-//        if(event.player() instanceof ServerPlayer) {
-            Level level = event.player().level();
-            for (BlockPos pos : blocks) {
-                BlockState modifiedState = level.getBlockState(pos).getToolModifiedState(event.useOnContext(), event.toolAction(), false);
-                if(modifiedState != null){
-                    System.out.println(level.setBlockAndUpdate(pos, modifiedState) ? "true" : "false");
-                }
+        Level level = event.player().level();
+        for (BlockPos pos : blocks) {
+            BlockState modifiedState = level.getBlockState(pos).getToolModifiedState(event.useOnContext(), event.toolAction(), false);
+            if(modifiedState != null){
+                level.setBlockAndUpdate(pos, modifiedState);
             }
-            System.out.println("Modifying " + blocks.size() + " blocks");
-//            event.player().sendSystemMessage(Component.literal());
-//        }
+        }
     }
+    private static final ToolRenderEvents.FloatColor WIREFRAME_COLOR_FALLBACK = new ToolRenderEvents.FloatColor(1.0f, 1.0f, 0.0f);
 
-    private static final ToolRenderEvents.FloatColor WIREFRAME_COLOR = new ToolRenderEvents.FloatColor(0.4f, 0.7f, 1.0f);
+    private static final Map<ToolAction, ToolRenderEvents.FloatColor> WIREFRAME_COLORS =  Map.ofEntries(
+        Map.entry(ToolActions.HOE_TILL, new ToolRenderEvents.FloatColor(0.5f, 1.0f, 0.3f)),
+        Map.entry(ToolActions.AXE_STRIP, new ToolRenderEvents.FloatColor(0.5f,0.3f,0.1f)),
+        Map.entry(ToolActions.AXE_SCRAPE, new ToolRenderEvents.FloatColor(0.2f, 0.7f, 0.4f)),
+        Map.entry(ToolActions.AXE_WAX_OFF, new ToolRenderEvents.FloatColor(1.0f, 0.7f, 0.3f)),
+        Map.entry(ToolActions.SHOVEL_FLATTEN, new ToolRenderEvents.FloatColor(0.6f, 0.6f, 0.0f))
+    );
     @Override
-    public ToolRenderEvents.FloatColor getWireframeColor() {
-        return WIREFRAME_COLOR;
+    protected ToolRenderEvents.FloatColor getWireframeColorForEvent(UseEventInfo event) {
+        return WIREFRAME_COLORS.getOrDefault(event.toolAction, WIREFRAME_COLOR_FALLBACK);
     }
 }

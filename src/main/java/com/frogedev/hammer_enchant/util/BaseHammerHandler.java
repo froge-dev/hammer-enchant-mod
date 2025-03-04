@@ -22,6 +22,8 @@ public abstract class BaseHammerHandler {
         return playersActivelyUsing.contains(playerUUID);
     }
 
+    public record HammerTarget(Iterator<BlockPos> blocksIterator, ToolRenderEvents.FloatColor wireframeColor){};
+
     public interface IEventInfo {
         Player player();
         BlockPos originPos();
@@ -39,15 +41,13 @@ public abstract class BaseHammerHandler {
 
         Direction hitDirection();
 
-        // When true, only process blocks of the same type.
+        // When true, only process blocksIterator of the same type.
         default boolean shouldUseAltAction() {
             return player().isCrouching();
         }
     }
 
-    public abstract ToolRenderEvents.FloatColor getWireframeColor();
-
-    public abstract Iterator<BlockPos> computeTargetBlocksForBaseEvent(Player player, BlockPos origin, Direction hitDirection);
+    public abstract HammerTarget computeTargetForBaseEvent(Player player, BlockPos origin, Direction hitDirection);
 
     public abstract boolean isToolCorrectType(ItemStack tool);
 

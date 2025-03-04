@@ -15,7 +15,7 @@ public class ModConfig {
             .comment("Mining speed mode [Default: '%s']".formatted(MiningSpeedMode.DEFAULT))
             .defineEnum("miningSpeedMode", MiningSpeedMode.DEFAULT);
     public static final ForgeConfigSpec.ConfigValue<Float> MINING_SPEED_CHEAT_CAP = BUILDER
-            .comment("Limit to how much harder a block can be than the center block. Basically, prevents mining obsidian by mining stone next to it. 0=only blocks with same or lower hardness will be mined. ")
+            .comment("Limit to how much harder a block can be than the center block. Basically, prevents mining obsidian by mining stone next to it. 0=only blocksIterator with same or lower hardness will be mined. ")
             .define("miningSpeedCheatCap", 2.0F);
     public static final ForgeConfigSpec.ConfigValue<Float> INSTAMINE_THRESHOLD = BUILDER
             .comment("Max block hardness that is considered to be instaminable by hand. Basically, this prevents mining stone by breaking a torch next to it. Hoes are an exception and can freely mine anything under this limit (such as tall grass).")

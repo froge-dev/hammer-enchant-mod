@@ -4,14 +4,12 @@ import com.frogedev.hammer_enchant.HammerEnchantMod;
 import com.frogedev.hammer_enchant.util.*;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.BlockDestructionProgress;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -24,16 +22,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-
-import java.lang.reflect.Field;
-import java.util.Iterator;
 
 @SuppressWarnings("unused")
 @Mod.EventBusSubscriber(modid = HammerEnchantMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ToolRenderEvents {
     /**
-     * Maximum number of blocks from the iterator to render
+     * Maximum number of blocksIterator from the iterator to render
      */
     private static final int MAX_BLOCKS = 75;
 
@@ -42,7 +36,7 @@ public class ToolRenderEvents {
     private static final BaseHammerHandler[] HANDLERS = {ToolUseHandler.INSTANCE, MiningHandler.INSTANCE};
 
     /**
-     * Renders the outline on the extra blocks
+     * Renders the outline on the extra blocksIterator
      *
      * @param event the highlight event
      */
@@ -58,20 +52,19 @@ public class ToolRenderEvents {
         BlockHitResult blockTrace = event.getTarget();
         BlockPos origin = blockTrace.getBlockPos();
 
-        record HandlerResult(Iterator<BlockPos> blocks, FloatColor wireframeColor){}
-        HandlerResult handlerResult = null;
+        BaseHammerHandler.HammerTarget hammerTarget = null;
 
         // See if any handlers qualify.
         for(BaseHammerHandler handler : HANDLERS){
-            Iterator<BlockPos> blocks = handler.computeTargetBlocksForBaseEvent(player, origin, blockTrace.getDirection());
-            if(blocks.hasNext()){
-                handlerResult = new HandlerResult(blocks, handler.getWireframeColor());
+            BaseHammerHandler.HammerTarget target = handler.computeTargetForBaseEvent(player, origin, blockTrace.getDirection());
+            if(target != null){
+                hammerTarget = target;
                 break;
             }
         }
 
         // If no handlers qualify, don't render anything.
-        if (handlerResult == null) {
+        if (hammerTarget == null) {
             return;
         }
 
@@ -85,19 +78,19 @@ public class ToolRenderEvents {
         // start drawing
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         Entity viewEntity = camera.getEntity();
-        int rendered = 0;
 
         CollisionContext collisionContext = CollisionContext.of(viewEntity);
 
-        do {
-            BlockPos pos = handlerResult.blocks.next();
+        int rendered = 0;
+        while (rendered < MAX_BLOCKS && hammerTarget.blocksIterator().hasNext()) {
+            BlockPos pos = hammerTarget.blocksIterator().next();
 
             if (level.getWorldBorder().isWithinBounds(pos)) {
                 Vec3 camPos = camera.getPosition();
                 rendered++;
-                highlightBlock(pos, matrices, level, camPos, buffers, 0.0f, handlerResult.wireframeColor.r, handlerResult.wireframeColor.g, handlerResult.wireframeColor.b);
+                highlightBlock(pos, matrices, level, camPos, buffers, 0.0f, hammerTarget.wireframeColor().r, hammerTarget.wireframeColor().g, hammerTarget.wireframeColor().b);
             }
-        } while (rendered < MAX_BLOCKS && handlerResult.blocks.hasNext());
+        }
 
         matrices.popPose();
         event.setCanceled(true);
