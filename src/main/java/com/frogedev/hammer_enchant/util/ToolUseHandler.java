@@ -86,10 +86,11 @@ public class ToolUseHandler extends EventSpecificHammerHandler<ToolUseHandler.Us
             for (BlockPos pos : blocks) {
                 BlockState modifiedState = level.getBlockState(pos).getToolModifiedState(event.useOnContext(), event.toolAction(), false);
                 if(modifiedState != null){
-                    event.player().sendSystemMessage(Component.literal(level.setBlockAndUpdate(pos, modifiedState) ? "true" : "false"));
+                    System.out.println(level.setBlockAndUpdate(pos, modifiedState) ? "true" : "false");
                 }
             }
-            event.player().sendSystemMessage(Component.literal("Modifying " + blocks.size() + " blocks"));
+            System.out.println("Modifying " + blocks.size() + " blocks");
+//            event.player().sendSystemMessage(Component.literal());
 //        }
     }
 

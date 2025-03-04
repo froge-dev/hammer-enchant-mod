@@ -6,12 +6,15 @@ import com.frogedev.hammer_enchant.util.ToolUseHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -24,14 +27,16 @@ import java.util.List;
 public class HammerEvents {
     @SubscribeEvent
     // Called on right-click.
-    public static void onToolModifyBlock(BlockEvent.BlockToolModificationEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer)) {
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event){
+        if (!(event.getEntity() instanceof ServerPlayer)) {
             return;
         }
-
-        if (ToolUseHandler.INSTANCE.tryPerform(event.getContext().getPlayer(), event.getPos(), event.getContext().getClickedFace())) {
+        if (ToolUseHandler.INSTANCE.tryPerform(event.getEntity(), event.getPos(), event.getFace())) {
             event.setCanceled(true);
         }
+    }
+    public static void onToolModifyBlock(BlockEvent.BlockToolModificationEvent event) {
+
     }
 
     // On conclusion of block broken.
