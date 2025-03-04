@@ -14,8 +14,8 @@ public class HammerEnchantMod {
     public static final String MOD_ID = "hammer_enchant";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public HammerEnchantMod(FMLJavaModLoadingContext ctx) {
-        IEventBus modEventBus = ctx.getModEventBus();
+    public HammerEnchantMod() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         // Prevent JVM from optimizing away these classes...
         new Generators();
@@ -25,6 +25,6 @@ public class HammerEnchantMod {
         MinecraftForge.EVENT_BUS.register(Generators.class);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
-        ctx.registerConfig(net.minecraftforge.fml.config.ModConfig.Type.COMMON, ModConfig.SPEC);
+        ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.COMMON, ModConfig.SPEC);
     }
 }
